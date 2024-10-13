@@ -140,7 +140,7 @@ body{
   background: #fff;
   margin: 2.5vw;
   padding: 8px;
-  border: 1px solid #0000006b;
+  box-shadow: #00000059 0em 0em 0.2em;
   border-radius: 15px;
   transition: .5s;
 }
@@ -176,6 +176,16 @@ a:hover{
 }
 
 :root{
+  --load1: ;
+  --load2: ;
+  --bg1: ;
+  --bg2: ;
+  --menu: ;
+  --hmenu: ;
+  --list: ;
+  --hlist: ;
+  --l-bg: ;
+  
   --goobl: #e8f0fe;
   --blu11: #6C9AD8;
   --pur11: #D7D5E3;
