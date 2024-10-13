@@ -11,6 +11,7 @@ body{
   background-size: cover;
   transition: 1s;
 }
+
 /**/
 .loading{
   position: absolute;
@@ -24,13 +25,12 @@ body{
   pointer-events: none;
 }
 .loading p{
-  color: white;
   animation: loading 2s linear infinite;
   animation-play-state: running;
 }
 .loading img{
-  width: 45vh;
-  height: 45vh;
+  width: 128;
+  height: 128;
 }
 @keyframes loading{
   0%,100%{
@@ -43,4 +43,13 @@ body{
 .hide{
   opacity: 0;
   transition: .65s;
+}
+
+:root{
+  --blu11: #6C9AD8;
+  --pur11: #D7D5E3;
+  --gry18: #E7E7E7;
+  --gre18: #7EC2B7;
+  --dbr20: #AD927F;
+  --brn20: #DECFC8;
 }
