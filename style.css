@@ -5,8 +5,7 @@ body{
   user-select: none;
   margin: 0 auto;
   display: block;
-  background-color: #e0e0e0;
-  background-image: url(../);
+  background-color: linear-gradient(to bottom, rgb(232 240 254) 68%,rgb(255 255 255) 0%);
   background-position: center;
   background-size: cover;
   transition: 1s;
@@ -67,9 +66,13 @@ body{
   }
   ~ * .list-bg{
     opacity: 1;
+    pointer-events: auto;
   }
 }
 #click-menu:not(:checked){
+  ~ * .list-w{
+    pointer-events: none;
+  }
   ~ * .list {
     transform: translateX(100%);
     transition-duration: 1s;
@@ -85,7 +88,8 @@ body{
   width: 100%;
   height: 100%;
   background: #c5b9b985;
-  backdrop-filter: blur(2.5px);
+  backdrop-filter: blur(3px);
+  transition: .65s;
 }
 .list-w{
   position: fixed;
@@ -120,6 +124,29 @@ body{
   text-align: right;
 }
 
+/* CONTENT */
+.card-w{
+  display: flex;
+  position: absolute;
+  justify-content: center;
+  width: 100vw;
+  top: 68%;
+  transform: translate(0, -50%);
+}
+.card{
+  flex-basis: 15%;
+  height: 50px;
+  background: #fff;
+  margin: 2.5vw;
+  padding: 8px;
+  border: 1px solid #0000006b;
+  border-radius: 15px;
+  transition: .5s;
+}
+.card:hover{
+  transform: scale(1.05);
+  box-shadow: #00000059 0em 0em 0.3em;
+}
 
 /* */
 a{
@@ -148,6 +175,7 @@ a:hover{
 }
 
 :root{
+  --goobl: #e8f0fe;
   --blu11: #6C9AD8;
   --pur11: #D7D5E3;
   --gry18: #E7E7E7;
