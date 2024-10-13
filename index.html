@@ -1,7 +1,7 @@
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <link rel="icon" href="" type="image/x-icon">
+  <link rel="icon" href="https://shaix0.github.io/Lab3_hw/img/load.webp" type="image/x-icon">
   <link rel="stylesheet" href="/Lab3_hw/style.css" type="text/css" />
   
   <title>Lab3_hw</title>
@@ -12,12 +12,44 @@
 </head>
 
 <body>
+  <noscript>
+    <style>
+      .loading{
+        opacity: 0;
+      }
+    </style> 
+    <div class="no-js-message">
+      <p style=" position: fixed;
+                 z-index: 2;
+                 color: white;
+                 background: #0000005e;
+                 padding: 5px 0 5px; 
+                 bottom: 5%;
+                 text-align: center;
+                 width: 100vw; ">您的瀏覽器不支援 JavaScript，或 JavaScript 已被禁用。請啟用 JavaScript 以獲取完整體驗。</p>
+    </div>
+  </noscript>
+
+  <input type="checkbox" id="click-menu" />
+  <header>
+    <div class="header">
+      <label for="click-menu" class="menu"> MENU </label>
+    </div>
+  </header>
+  
   <div class="loading">
     <img src="/Lab3_hw/img/load.webp">
     <p> LOADING... </p>
   </div>
   <div id="copy-alert" class="hide">已複製連結</div>
-  
+
+  <div class="list-w">
+    <ul class="list">
+      <li class="l-item">
+        
+      </li>
+    </ul>
+  </div>
 </body>
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
