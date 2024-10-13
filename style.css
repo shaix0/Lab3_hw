@@ -5,7 +5,7 @@ body{
   user-select: none;
   margin: 0 auto;
   display: block;
-  background-color: linear-gradient(to bottom, rgb(232 240 254) 68%,rgb(255 255 255) 0%);
+  background: linear-gradient(to bottom, rgb(232 240 254) 68%,rgb(255 255 255) 0%);
   background-position: center;
   background-size: cover;
   transition: 1s;
