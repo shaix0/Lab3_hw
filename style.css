@@ -154,6 +154,10 @@ body{
 .c-sub{
   color: #626262;
 }
+.c-img{
+  border-radius: 15px 15px 0 0;
+  max-width: 100%;
+}
 
 /* */
 a{
