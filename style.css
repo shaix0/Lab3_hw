@@ -176,9 +176,10 @@ body{
 @media screen and (max-width: 164vh){
   .card-w{
     flex-direction: column;
+    top: 100%;
   }
 }
-@media screen and (max-height: 210vw) and (max-width: 450px){
+/@media screen and (max-height: 210vw) and (max-width: 450px){
   .card-w{
     top: 80%;
   }
