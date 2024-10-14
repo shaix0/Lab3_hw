@@ -135,7 +135,7 @@ body{
 }
 .card{
   flex-basis: 15%;
-  height: 50px;
+  height: auto;
   background: #fff;
   margin: 2.5vw;
   padding: 8px;
@@ -184,7 +184,7 @@ a:hover{
 :root{
   --load1: #deeef1;
   --load2: #a6cde2;
-  --bg1: ##a6cde2;
+  --bg1: #a6cde2;
   --bg2: #fff;
   --menu: #fff;
   --hmenu: #fff;
