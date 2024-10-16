@@ -215,8 +215,8 @@ a:hover{
   transition: .65s;
 }
 .dark{
-  --bg1: #354c5a;
-  --bg2: #7f7f7f;
+  --bg1: #2b3e50;
+  --bg2: #1b1f26;
   --l-bg: #7a7e7fa3;
   --text: #fff;
   --c-bg: #000000;
