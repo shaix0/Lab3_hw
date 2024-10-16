@@ -41,6 +41,11 @@
             </a>
           </li>
           <li class="l-item">
+            <a class="list-link" id="mode" href="#">
+              <p class="list-text"> 深色模式 </p>
+            </a>
+          </li>
+          <li class="l-item">
             <a class="list-link" id="share" href="#">
               <p class="list-text"> 分享 </p>
             </a>
@@ -99,6 +104,12 @@
   <script>
     $(window).on('load', function(){
       $(".loading").addClass("hide");
+    });
+    var flag = false;
+    $("#mode").on('click', function() {
+      $("body").toggleClass("dark");
+      flag = !flag;
+      $("#mode").text(flag ? "淺色模式" : "深色模式");
     });
     $("#share").on('click', function() {
       var fixedText = "https://shaix0.github.io/Lab3_hw";
