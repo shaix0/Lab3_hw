@@ -10,6 +10,10 @@ body{
   background-size: cover;
   transition: 1s;
 }
+/* MODE */
+.dark{
+  
+}
 
 /* LOADING... */
 .loading{
