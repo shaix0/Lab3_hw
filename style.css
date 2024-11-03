@@ -207,6 +207,16 @@ a:hover{
   left: 50%;
   transform: translate(-50%, -50%);
 }
+.insert-bg{
+  pointer-events: none;
+  position: fixed;
+  z-index: 5;
+  width: 100%;
+  height: 100%;
+  background: var(--l-bg);
+  backdrop-filter: blur(3px);
+  transition: .65s;
+}
 #insert-w-close{
   display: block;
   width: 20px;
