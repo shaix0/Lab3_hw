@@ -135,10 +135,6 @@
   $(window).on('load', function(){
     $(".loading").addClass("hide");
   });
-
-  $(".menu-btn").on('click', function(){
-    $(".list-bg").toggleClass("hide");
-  });
     
   var flag = false;
   $("#mode").on('click', function() {
@@ -199,7 +195,7 @@
     $("#insert-title").val("");
     $("#insert-sub").val("");
     $("#insert-img").val("");
-    $("#insert-window, .insert-bg, .list, .list-bg").toggleClass("hide");
+    $("#insert-window, .insert-bg").toggleClass("hide");
   });
 
 </script>
