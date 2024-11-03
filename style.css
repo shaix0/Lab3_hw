@@ -13,7 +13,7 @@ body{
 
 /* LOADING... */
 .loading{
-  position: absolute;
+  position: fixed;
   z-index: 5;
   width: 100%;
   height: 100%;
