@@ -77,6 +77,9 @@ body{
     transition-duration: 1s;
     transition-timing-function: ease-in-out;
   }
+  ~ * .list-bg{
+    pointer-events: none;
+  }
 }
 .list-bg{
   pointer-events: none;
