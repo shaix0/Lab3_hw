@@ -168,10 +168,10 @@
     $("#insert-window, .insert-bg").toggleClass("hide");
 
     if ($(".insert-bg").attr("style") !== "pointer-events: auto;") {
-      $(".insert-bg").attr("style", "pointer-events: auto;");
+      $(".insert-bg, .insert-window").attr("style", "pointer-events: auto;");
     }
     else {
-      $(".insert-bg").attr("style", "");
+      $(".insert-bg, .insert-window").attr("style", "");
     }
   });
 
