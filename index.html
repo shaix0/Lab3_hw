@@ -168,10 +168,10 @@
     $("#insert-window, .insert-bg").toggleClass("hide");
 
     if ($(".insert-bg").attr("style") !== "pointer-events: auto;") {
-      $(".insert-bg, .insert-window").attr("style", "pointer-events: auto;");
+      $(".insert-bg, #insert-window").attr("style", "pointer-events: auto;");
     }
     else {
-      $(".insert-bg, .insert-window").attr("style", "");
+      $(".insert-bg, #insert-window").attr("style", "");
     }
   });
 
@@ -206,7 +206,7 @@
     $("#insert-link").val("");
     $("#insert-img").val("");
     $("#insert-window, .insert-bg, .list-bg").toggleClass("hide");
-    $(".insert-bg, .insert-window").attr("style", "");
+    $(".insert-bg, #insert-window").attr("style", "");
     $("#click-menu").prop("checked", false);
   });
 
