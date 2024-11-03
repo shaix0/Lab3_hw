@@ -66,6 +66,7 @@ body{
   }
   ~ * .list-bg{
     pointer-events: auto;
+    opacity: 1;
   }
 }
 #click-menu:not(:checked){
@@ -78,7 +79,7 @@ body{
     transition-timing-function: ease-in-out;
   }
   ~ * .list-bg{
-    pointer-events: none;
+    opacity: 0; 
   }
 }
 .list-bg{
