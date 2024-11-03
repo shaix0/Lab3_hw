@@ -184,7 +184,7 @@
     }
   
     //加入新的card
-    const newCardHtml = 
+    const newCardHtml = `
         <div class="card">
           <a href="#" target="_blank">
             <img class="c-img" src="${imgUrl}" />
@@ -192,7 +192,7 @@
             <p class="c-sub">${description}</p>
           </a>
         </div>
-      ;
+     ` ;
     $(".card-w").append(newCardHtml);
   
     //清空內容後關閉視窗
