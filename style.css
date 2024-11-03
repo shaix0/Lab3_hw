@@ -199,6 +199,46 @@ a{
 a:hover{
   text-decoration: none;
 }
+
+#insert-window{
+  background: var(--c-bg);
+  padding: 15;
+  border-radius: 20px;
+  width: 60vw;
+  position: fixed;
+  z-index: 5;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+#insert-w-close{
+  display: block;
+  width: 20px;
+  float: right;
+  color: var(--text);
+}
+.insert-input{
+  width: -webkit-fill-available;
+  resize: none;
+}
+#insert-sub{
+  height: 30%;
+}
+.insert-field{
+  width: -webkit-fill-available;
+  display: inline-block;
+  margin-block-end: 15px;
+}
+#insert-submit{
+  display: block;
+  float: right;
+  color: var(--text);
+  background: var(--c-bg);
+  padding: 5 10 5;
+  border-radius: 10px;
+  border: 1px solid #000000;
+}
+
 #copy-alert{
   position: absolute;
   z-index: 2;
