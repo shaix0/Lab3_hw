@@ -82,6 +82,10 @@
         <textarea class="insert-input" id="insert-sub"></textarea>
       </div>
       <div class="insert-field">
+        <label class="insert-t">網頁連結：</label>
+        <input type="text" class="insert-input" id="insert-link">
+      </div>
+      <div class="insert-field">
         <label class="insert-t">圖片連結：</label>
         <input type="text" class="insert-input" id="insert-img">
       </div>
@@ -175,10 +179,11 @@
     //取得輸入內容
     const title = $("#insert-title").val();
     const description = $("#insert-sub").val();
+    const link = $("#insert-link").val();
     const imgUrl = $("#insert-img").val();
   
     //確認所有欄位被填寫
-    if (title.trim() === "" || description.trim() === "" || imgUrl.trim() === "") {
+    if (title.trim() === "" || description.trim() === "" || imgUrl.trim() === "" || link.trim() === "") {
       alert("請填寫所有欄位");
       return;
     }
@@ -186,7 +191,7 @@
     //加入新的card
     const newCardHtml = `
         <div class="card">
-          <a href="#" target="_blank">
+          <a href="${link}" target="_blank">
             <img class="c-img" src="${imgUrl}" />
             <p class="c-title">${title}</p>
             <p class="c-sub">${description}</p>
@@ -198,6 +203,7 @@
     //清空內容後關閉視窗
     $("#insert-title").val("");
     $("#insert-sub").val("");
+    $("#insert-link").val("");
     $("#insert-img").val("");
     $("#insert-window, .insert-bg, .list, .list-bg").toggleClass("hide");
     $(".insert-bg").attr("style", "");
