@@ -200,6 +200,7 @@ a:hover{
 }
 
 #insert-window{
+  pointer-events: none;
   background: var(--c-bg);
   padding: 15;
   border-radius: 20px;
