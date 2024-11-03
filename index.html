@@ -46,6 +46,11 @@
             </a>
           </li>
           <li class="l-item">
+            <a class="list-link" id="insert" href="#">
+              <p class="list-text"> 編輯 </p>
+            </a>
+          </li>
+          <li class="l-item">
             <a class="list-link" id="share" href="#">
               <p class="list-text"> 分享 </p>
             </a>
@@ -59,7 +64,31 @@
     <img src="/Lab3_hw/img/com.webp">
     <p> LOADING... </p>
   </div>
-  <div id="copy-alert" class="hide">已複製連結</div>
+  
+  <div>
+    <div id="insert-window" class="hide">
+      <span id="insert-w-close">
+        <svg focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path>
+        </svg>
+      </span>
+      <div>
+        <label>標題：</label>
+        <input type="text">
+      </div>
+      <div>
+        <label>說明：</label>
+        <textarea></textarea>
+      </div>
+      <div>
+        <label>圖片連結：</label>
+        <input type="text">
+      </div>
+      <button>確定</button>
+    </div>
+    
+    <div id="copy-alert" class="hide">已複製連結</div>
+  </div>
 
   <div class="mid-text">
     <p class="title">
@@ -123,5 +152,9 @@
       setTimeout(function() {
         $("#copy-alert").toggleClass("hide");
       }, 1500);
+    });
+
+    $("#insert","#insert-w-close").on('click', function() {
+      $("#insert-window").toggleClass("hide");
     });
   </script>
