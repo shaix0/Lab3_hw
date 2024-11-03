@@ -32,7 +32,7 @@
   <header>
     <nav class="menu">
       <label for="click-menu" class="menu-btn"> MENU </label>
-      <div class="list-bg"></div>
+      <div class="list-bg hide"></div>
       <div class="list-w">
         <ul class="list">
           <li class="l-item">
@@ -131,38 +131,75 @@
 </body>
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
-  <script>
-    $(window).on('load', function(){
-      $(".loading").addClass("hide");
-    });
-    var flag = false;
-    $("#mode").on('click', function() {
-      $("body").toggleClass("dark");
-      flag = !flag;
-      $("#m-text").text(flag ? "淺色模式" : "深色模式");
-    });
-    $("#share").on('click', function() {
-      var fixedText = "https://shaix0.github.io/Lab3_hw";
+<script>
+  $(window).on('load', function(){
+    $(".loading").addClass("hide");
+  });
 
-      navigator.clipboard.writeText(fixedText).then(function() {
-        $("#copy-alert").toggleClass("hide");
-      }).catch(function(error) {
-        console.error("複製錯誤: ", error);
-      });
+  $(".menu-btn").on('click', function(){
+    $(".list-bg").toggleClass("hide");
+  });
+    
+  var flag = false;
+  $("#mode").on('click', function() {
+    $("body").toggleClass("dark");
+    flag = !flag;
+    $("#m-text").text(flag ? "淺色模式" : "深色模式");
+  });
+  $("#share").on('click', function() {
+    var fixedText = "https://shaix0.github.io/Lab3_hw";
 
-      setTimeout(function() {
-        $("#copy-alert").toggleClass("hide");
-      }, 1500);
+    navigator.clipboard.writeText(fixedText).then(function() {
+      $("#copy-alert").toggleClass("hide");
+    }).catch(function(error) {
+      console.error("複製錯誤: ", error);
     });
 
-    $("#insert, #insert-w-close").on('click', function() {
-      $("#insert-window, .insert-bg").toggleClass("hide");
+    setTimeout(function() {
+      $("#copy-alert").toggleClass("hide");
+    }, 1500);
+  });
 
-      if ($(".insert-bg").attr("style") !== "pointer-events: auto;") {
-        $(".insert-bg").attr("style", "pointer-events: auto;");
-      }
-      else {
-        $(".insert-bg").attr("style", "");
-      }
-    });
-  </script>
+  $("#insert, #insert-w-close").on('click', function() {
+    $("#insert-window, .insert-bg").toggleClass("hide");
+
+    if ($(".insert-bg").attr("style") !== "pointer-events: auto;") {
+      $(".insert-bg").attr("style", "pointer-events: auto;");
+    }
+    else {
+      $(".insert-bg").attr("style", "");
+    }
+  });
+
+  $("#insert-submit").on('click', function() {
+    //取得輸入內容
+    const title = $("#insert-title").val();
+    const description = $("#insert-sub").val();
+    const imgUrl = $("#insert-img").val();
+  
+    //確認所有欄位被填寫
+    if (title.trim() === "" || description.trim() === "" || imgUrl.trim() === "") {
+      alert("請填寫所有欄位");
+      return;
+    }
+  
+    //加入新的card
+    const newCardHtml = '
+        <div class="card">
+          <a href="#" target="_blank">
+            <img class="c-img" src="${imgUrl}" />
+            <p class="c-title">${title}</p>
+            <p class="c-sub">${description}</p>
+          </a>
+        </div>
+      ';
+    $(".card-w").append(newCardHtml);
+  
+    //清空內容後關閉視窗
+    $("#insert-title").val("");
+    $("#insert-sub").val("");
+    $("#insert-img").val("");
+    $("#insert-window, .insert-bg, .list, .list-bg").toggleClass("hide");
+  });
+
+</script>
