@@ -66,6 +66,7 @@
   </div>
   
   <div>
+    <div class="insert-bg hide"></div>
     <div id="insert-window" class="hide">
       <span id="insert-w-close">
         <svg focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -155,6 +156,13 @@
     });
 
     $("#insert, #insert-w-close").on('click', function() {
-      $("#insert-window").toggleClass("hide");
+      $("#insert-window, .insert-bg").toggleClass("hide");
+
+      if ($(".insert-bg").attr("style") !== "pointer-events: auto;") {
+        $(".insert-bg").attr("style", "pointer-events: auto;");
+      }
+      else {
+        $(".insert-bg").attr("style", "");
+      }
     });
   </script>
