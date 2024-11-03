@@ -72,19 +72,19 @@
           <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path>
         </svg>
       </span>
-      <div>
-        <label>標題：</label>
-        <input type="text">
+      <div class="insert-field">
+        <label class="insert-t">標題：</label>
+        <input type="text" class="insert-input" id="insert-title">
       </div>
-      <div>
-        <label>說明：</label>
-        <textarea></textarea>
+      <div class="insert-field">
+        <label class="insert-t">說明：</label>
+        <textarea class="insert-input" id="insert-sub"></textarea>
       </div>
-      <div>
-        <label>圖片連結：</label>
-        <input type="text">
+      <div class="insert-field">
+        <label class="insert-t">圖片連結：</label>
+        <input type="text" class="insert-input" id="insert-img">
       </div>
-      <button>確定</button>
+      <button id="insert-submit">確定</button>
     </div>
     
     <div id="copy-alert" class="hide">已複製連結</div>
@@ -154,7 +154,7 @@
       }, 1500);
     });
 
-    $("#insert", "#insert-w-close").on('click', function() {
+    $("#insert, #insert-w-close").on('click', function() {
       $("#insert-window").toggleClass("hide");
     });
   </script>
