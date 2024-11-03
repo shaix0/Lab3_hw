@@ -250,7 +250,7 @@ a:hover{
   background: var(--c-bg);
   padding: 5 10 5;
   border-radius: 10px;
-  border: 1px solid #000000;
+  border: 1px solid var(--text);
 }
 
 #copy-alert{
