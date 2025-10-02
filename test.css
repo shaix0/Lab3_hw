@@ -19,6 +19,7 @@ body {
     --card-bg-color: #ffffff; 
     --handwritten-ink: #333333;
     --light-green: #cae8c0;
+    --light-yellow: #fffbf5;
     --pale-yellow: #fdf8e9; /* 儀表板卡片背景色 */
     --line-color: #a4b49c; /* 邊框/陰影顏色 */
     --active-color: #5cb85c;
@@ -95,7 +96,7 @@ body {
 }
 
 .card {
-    background-color: #ffffff; 
+    background-color: var(--light-yellow); 
     padding: 25px;
     border-radius: 5px;
     //box-shadow: 4px 4px 0 var(--line-color); 
