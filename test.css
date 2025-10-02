@@ -95,7 +95,7 @@ body {
 }
 
 .card {
-    background-color: var(--pale-yellow); 
+    background-color: #ffffff; 
     padding: 25px;
     border-radius: 5px;
     //box-shadow: 4px 4px 0 var(--line-color); 
