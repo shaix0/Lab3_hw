@@ -196,45 +196,122 @@ body {
 }
 
 
-/* --- 設定頁面樣式 --- */
-.settings-page-layout { max-width: 1200px; margin: 0 auto; }
-.settings-content-wrapper { display: flex; max-width: 800px; margin: 40px auto; gap: 30px; }
-.profile-display-area { width: 250px; text-align: center; padding-top: 20px; }
+/* ================================== */
+/* === 設定頁面專用佈局 (Side Menu) === */
+/* ================================== */
+.settings-page-layout {
+    /* 讓設定頁面佔滿整個視口 */
+    padding: 0; 
+    max-width: 100%;
+    min-height: 100vh;
+    display: flex;
+    margin-top: 0; 
+    background-color: var(--settings-main-bg); /* 圖片中的灰色背景 */
+}
 
-/* 較大的頭像用於設定頁面內容區 */
+/* 設置頁面佈局的容器 (設定頁面的內容區塊) */
+.settings-wrapper {
+    display: flex;
+    flex-grow: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    height: 100vh; /* 讓容器高度充滿視口 */
+}
+
+/* 側邊導航欄 */
+.settings-sidebar {
+    width: 280px; 
+    background-color: var(--card-bg-color); /* 左側背景為白色 */
+    padding: 30px 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; 
+    align-items: center;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
+    position: relative; /* 用於定位 home-icon-top */
+}
+
+/* 左上角的回首頁按鈕 */
+.home-icon-top {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    font-size: 2.2rem;
+    color: #999; /* 模仿圖片中的淺灰色 */
+    text-decoration: none;
+}
+
+/* 側邊欄頂部內容（頭像和名稱） */
+.profile-display-area {
+    text-align: center;
+    width: 100%;
+    margin-top: 50px; /* 為左上角的房子圖標騰出空間 */
+}
 .profile-pic.large { 
-    width: 150px; 
-    height: 150px; 
-    margin: 0 auto 10px; 
-    background-size: 120%; 
+    width: 150px; height: 150px; 
+    margin: 0 auto 15px; 
+    border-radius: 50%;
+    background-color: var(--settings-line-color); /* 模擬圖片中的灰色圓圈 */
+    /* 簡化頭像圖標，使用純色，與圖片風格更接近 */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23ffffff' d='M12 4a4 4 0 0 1 4 4a4 4 0 0 1-4 4a4 4 0 0 1-4-4a4 4 0 0 1 4-4m0 10c4.42 0 8 1.79 8 4v2H4v-2c0-2.21 3.58-4 8-4'/%3E%3C/svg%3E");
+    background-size: 80%;
+    background-repeat: no-repeat;
+    background-position: center;
+    border: none; /* 移除邊框 */
 }
-.user-name.large { font-size: 1.2rem; font-weight: bold; color: #555; margin-bottom: 30px; }
+.user-name.large { 
+    font-size: 1.2rem; 
+    font-weight: bold; 
+    color: #555; 
+    margin-bottom: 30px; 
+}
 
-.settings-card { 
-    background-color: var(--card-bg-color); 
-    padding: 30px; 
-    min-height: 400px; 
-    flex-grow: 1; 
-    box-shadow: 4px 4px 0 #999; 
-    border: 1px solid #999; 
+/* 側邊欄底部功能（登出） */
+.sidebar-footer {
+    width: 100%;
+    padding-top: 20px;
+    border-top: 1px solid var(--settings-line-color); /* 使用淺灰色線條 */
+    text-align: left;
 }
-.handwritten-title { font-size: 1.5rem; font-weight: 900; margin-bottom: 20px; }
+.logout-link {
+    display: inline-block; /* 讓它不會佔滿整個寬度 */
+    text-decoration: none;
+    font-size: 1.2rem;
+    color: #777;
+    padding: 10px 0;
+}
+.logout-link i {
+    font-size: 1.3rem;
+    margin-right: 10px;
+}
+
+/* 設定頁面右側內容區 */
+.settings-content-area {
+    flex-grow: 1;
+    background-color: var(--card-bg-color); /* 右側內容卡片背景為白色 */
+    padding: 40px;
+    border-left: 1px solid var(--settings-line-color); /* 右側內容與側邊欄的分割線 */
+    /* 使用 box-shadow 模擬圖片中的陰影/邊緣感 */
+    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.05);
+}
+
+/* 設定內容區塊樣式（保持不變） */
+.handwritten-title { font-size: 1.8rem; font-weight: 900; margin-bottom: 25px; } /* 標題放大 */
 .setting-block { padding: 15px 0; }
 .setting-item { display: flex; align-items: center; margin-bottom: 15px; }
-.setting-label { width: 180px; font-weight: bold; font-size: 1.1rem; }
+.setting-label { width: 150px; font-weight: bold; font-size: 1.2rem; }
 .handwritten-input { 
     border: none; 
     border-bottom: 2px solid var(--handwritten-ink); 
     background: none; 
-    font-size: 1.3rem; 
+    font-size: 1.5rem; /* 增大輸入字體 */
     padding: 0 5px; 
     outline: none; 
     flex-grow: 1; 
 }
-.handwritten-input.small { font-size: 1.1rem; width: 80px; flex-grow: 0; text-align: right; }
-.handwritten-divider { border: none; border-top: 1px solid #d0d0d0; margin: 20px 0; }
+.handwritten-input.small { font-size: 1.2rem; width: 80px; flex-grow: 0; text-align: right; }
+.handwritten-divider { border: none; border-top: 1px solid var(--settings-line-color); margin: 30px 0; }
 .logout-full-button.hidden-on-navbar { display: none; }
-
 
 /* --- 響應式設計 (RWD) --- */
 @media (max-width: 900px) {
