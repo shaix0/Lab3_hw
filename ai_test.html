@@ -1,1 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>營養追蹤儀表板</title>
+    <link rel="stylesheet" href="test.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <header class="top-navbar">
+        <div class="nav-menu">
+            <a href="dashboard.html" class="nav-item active">日誌</a>
+            <a href="#" class="nav-item">趨勢</a>
+            <a href="#" class="nav-item">食譜</a>
+        </div>
 
+        <div class="header-right">
+            <a href="settings.html" title="設定"><div class="profile-pic nav-icon"></div></a>
+            <div class="dot-indicator"></div>
+        </div>
+    </header>
+
+    <main class="dashboard full-width-layout">
+        <div class="content-wrapper">
+            <div class="card nutrition-report">
+                <div class="card-header">
+                    <span class="date">2025.09.30</span>
+                    <i class="fa-solid fa-calendar-day calendar-icon"></i>
+                </div>
+                
+                <div class="chart-section">
+                    <div class="donut-chart-container">
+                        <div class="donut-chart">
+                            <div class="center-hole"></div>
+                        </div>
+                        <span class="fat-percent">脂肪 5%</span>
+                    </div>
+
+                    <p class="recommendation">成人每日建議營養攝取量</p>
+                    <a href="settings.html" class="report-link">
+                        設定健康目標 查看完整報告 →
+                    </a>
+                </div>
+
+                <div class="progress-section">
+                    <div class="progress-item"><div class="progress-label">碳水</div><div class="progress-bar red-bar"></div></div>
+                    <div class="progress-item"><div class="progress-label">蛋白質</div><div class="progress-bar blue-bar"></div></div>
+                    <div class="progress-item"><div class="progress-label">脂肪</div><div class="progress-bar green-bar"></div></div>
+                    <div class="progress-item"><div class="progress-label">卡路里</div><div class="progress-bar orange-bar"></div></div>
+                </div>
+            </div>
+
+            <div class="card food-log-card">
+                <div class="food-entry">
+                    <p class="food-name-handwritten">薯條</p>
+                    <div class="food-details">
+                        <img src="未命名的作品.jpg" alt="薯條" class="food-image">
+                        <div class="info"><p>123 kcal</p><p class="notes">......</p></div>
+                    </div>
+                </div>
+
+                <div class="food-entry">
+                    <p class="food-name-handwritten">飯</p>
+                    <div class="food-details">
+                        <img src="未命名的作品.jpg" alt="飯" class="food-image">
+                        <div class="info"><p>123 kcal</p><p class="notes">......</p></div>
+                    </div>
+                </div>
+                
+                <div class="new-entry-area">
+                    <div class="empty-placeholder"></div>
+                    <div class="empty-placeholder"></div>
+                    <div class="action-menu">
+                        <button class="menu-item"><i class="fa-solid fa-image"></i> 照片圖庫</button>
+                        <button class="menu-item"><i class="fa-solid fa-camera"></i> 拍照</button>
+                        <button class="menu-item"><i class="fa-solid fa-magnifying-glass"></i> 選擇檔案</button>
+                    </div>
+                    <button class="add-button"><i class="fa-solid fa-plus"></i></button>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
