@@ -4,31 +4,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>使用者設定</title>
-    <link rel="stylesheet" href="test.css"> 
+    <link rel="stylesheet" href="style.css"> 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
-    <header class="top-navbar">
-        <div class="header-right">
-            <a href="ai_test.html" title="儀表板"><i class="fa-solid fa-house home-icon"></i></a>
+    
+    <main class="settings-page-layout">
+        <div class="settings-wrapper">
             
-            <div class="logout-icon" title="登出">
-                <i class="fa-solid fa-arrow-right-from-bracket"></i>
-            </div>
-            
-            <a href="settings.html" title="設定"><div class="profile-pic nav-icon active"></div></a>
-            <div class="dot-indicator"></div>
-        </div>
-    </header>
+            <div class="settings-sidebar">
+                
+                <a href="dashboard.html" title="回儀表板" class="home-link home-icon-top">
+                    <i class="fa-solid fa-house"></i>
+                </a>
 
-    <main class="dashboard full-width-layout settings-page-layout">
-        <div class="settings-content-wrapper">
-             <div class="profile-display-area">
-                <div class="profile-pic large"></div>
-                <p class="user-name large">USER NAME</p>
+                <div class="profile-display-area">
+                    <div class="profile-pic large"></div>
+                    <p class="user-name large">USER NAME</p>
+                </div>
+
+                <div class="sidebar-footer">
+                    <a href="#" title="登出" class="logout-link">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i> 登出
+                    </a>
+                </div>
             </div>
             
-            <div class="card settings-card">
+            <div class="settings-content-area">
+                
                 <div class="setting-block basic-setting">
                     <h2 class="handwritten-title">基本設定</h2>
                     <div class="setting-item">
