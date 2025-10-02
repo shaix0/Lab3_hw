@@ -31,41 +31,15 @@ body {
 /* === 頂部導航列 (Top Navbar) === */
 .top-navbar {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end; /* 將內容推到右側 */
     align-items: center;
-    background-color: var(--light-green); /* 與背景色一致 */
+    background-color: var(--light-green);
     padding: 15px 40px;
     height: 60px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .nav-menu {
-    display: flex;
-    gap: 30px;
-}
-
-.nav-item {
-    text-decoration: none;
-    font-size: 1.1rem;
-    font-weight: bold;
-    color: #888;
-    position: relative;
-    padding-bottom: 5px;
-    transition: color 0.2s;
-}
-
-.nav-item.active {
-    color: var(--active-color);
-}
-
-.nav-item.active::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 3px;
-    background-color: var(--active-color);
+    display: none; /* 隱藏菜單區域 */
 }
 
 .header-right {
