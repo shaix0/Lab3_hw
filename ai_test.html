@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>營養追蹤儀表板</title>
-    <link rel="stylesheet" href="test.css">
+    <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
@@ -31,16 +31,12 @@
                 
                 <div class="chart-section">
                     <div class="donut-chart-container">
-                        <div class="donut-chart">
-                            <div class="center-hole"></div>
-                        </div>
+                        <div class="donut-chart"><div class="center-hole"></div></div>
                         <span class="fat-percent">脂肪 5%</span>
                     </div>
 
                     <p class="recommendation">成人每日建議營養攝取量</p>
-                    <a href="settings.html" class="report-link">
-                        設定健康目標 查看完整報告 →
-                    </a>
+                    <a href="settings.html" class="report-link">設定健康目標 查看完整報告 →</a>
                 </div>
 
                 <div class="progress-section">
@@ -68,18 +64,21 @@
                     </div>
                 </div>
                 
-                <div class="new-entry-area">
-                    <div class="empty-placeholder"></div>
-                    <div class="empty-placeholder"></div>
-                    <div class="action-menu">
-                        <button class="menu-item"><i class="fa-solid fa-image"></i> 照片圖庫</button>
-                        <button class="menu-item"><i class="fa-solid fa-camera"></i> 拍照</button>
-                        <button class="menu-item"><i class="fa-solid fa-magnifying-glass"></i> 選擇檔案</button>
-                    </div>
-                    <button class="add-button"><i class="fa-solid fa-plus"></i></button>
+                <div id="actionMenu" class="action-menu-popup hidden">
+                    <button class="menu-item"><i class="fa-solid fa-image"></i> 照片圖庫</button>
+                    <button class="menu-item"><i class="fa-solid fa-camera"></i> 拍照</button>
+                    <button class="menu-item"><i class="fa-solid fa-magnifying-glass"></i> 選擇檔案</button>
                 </div>
+                
+                <button id="addButton" class="add-button"><i class="fa-solid fa-plus"></i></button>
             </div>
         </div>
     </main>
+    
+    <script>
+        document.getElementById('addButton').addEventListener('click', function() {
+            document.getElementById('actionMenu').classList.toggle('hidden');
+        });
+    </script>
 </body>
 </html>
