@@ -10,7 +10,7 @@
 
 body {
     display: block;
-    background-color: #e5f4e0; /* 主背景色：淺綠色 */
+    background-color: var(--pale-yellow);
     min-height: 100vh;
 }
 
@@ -18,8 +18,8 @@ body {
 :root {
     --card-bg-color: #ffffff; 
     --handwritten-ink: #333333;
-    --light-green: #e5f4e0;
-    --pale-yellow: #fffbf5; /* 儀表板卡片背景色 */
+    --light-green: #cae8c0;
+    --pale-yellow: #fdf8e9; /* 儀表板卡片背景色 */
     --line-color: #a4b49c; /* 邊框/陰影顏色 */
     --active-color: #5cb85c;
     --red-progress: #d9534f;
@@ -124,10 +124,10 @@ body {
     background-color: var(--pale-yellow); 
     padding: 25px;
     border-radius: 5px;
-    box-shadow: 4px 4px 0 var(--line-color); 
+    //box-shadow: 4px 4px 0 var(--line-color); 
     flex: 1;
     min-height: 500px;
-    border: 1px solid var(--line-color);
+    border: 2px solid var(--line-color);
 }
 
 /* --- 儀表板卡片樣式 --- */
