@@ -1,0 +1,188 @@
+/* 設置所有元素的邊距、內邊距、盒模型和通用字體 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe Print', 'Comic Sans MS', sans-serif; 
+    color: #444; 
+}
+
+body {
+    display: block;
+    background-color: #e5f4e0; /* 主背景色：淺綠色 */
+    min-height: 100vh;
+}
+
+/* === 模擬手寫風格的 CSS 變數 === */
+:root {
+    --card-bg-color: #ffffff; 
+    --handwritten-ink: #333333;
+    --light-green: #e5f4e0;
+    --pale-yellow: #fffbf5;
+    --line-color: #a4b49c; 
+    --active-color: #5cb85c;
+    --red-progress: #d9534f;
+    --blue-progress: #428bca;
+    --green-progress: #5cb85c;
+    --orange-progress: #f0ad4e;
+}
+
+/* === 頂部導航列 (Top Navbar) === */
+.top-navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--light-green); /* 與背景色一致 */
+    padding: 15px 40px;
+    height: 60px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.nav-menu {
+    display: flex;
+    gap: 30px;
+}
+
+.nav-item {
+    text-decoration: none;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #888;
+    position: relative;
+    padding-bottom: 5px;
+    transition: color 0.2s;
+}
+
+.nav-item.active {
+    color: var(--active-color);
+}
+
+.nav-item.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background-color: var(--active-color);
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.home-icon,
+.logout-icon {
+    font-size: 1.3rem;
+    color: #777;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.dot-indicator {
+    width: 12px;
+    height: 12px;
+    background-color: #ffffff;
+    border-radius: 50%;
+    border: 2px solid var(--line-color); 
+}
+
+.nav-icon {
+    width: 35px;
+    height: 35px;
+    background-color: #e0e0e0; 
+    border-radius: 50%;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23a1a1a1' d='M12 4a4 4 0 0 1 4 4a4 4 0 0 1-4 4a4 4 0 0 1-4-4a4 4 0 0 1 4-4m0 10c4.42 0 8 1.79 8 4v2H4v-2c0-2.21 3.58-4 8-4'/%3E%3C/svg%3E");
+    background-size: 80%;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.nav-icon.active {
+    border: 2px solid var(--handwritten-ink);
+    padding: 1px;
+}
+
+/* === 主內容區 (Dashboard & Settings) === */
+.dashboard {
+    padding: 20px 40px;
+    max-width: 100%;
+}
+
+.content-wrapper {
+    display: flex;
+    gap: 30px;
+    margin-top: 20px;
+}
+
+.card {
+    background-color: var(--pale-yellow); 
+    padding: 25px;
+    border-radius: 5px;
+    box-shadow: 4px 4px 0 var(--line-color); 
+    flex: 1;
+    min-height: 500px;
+    border: 1px solid var(--line-color);
+}
+
+/* --- 儀表板卡片樣式 --- */
+.nutrition-report { display: flex; flex-direction: column; }
+.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; font-weight: bold; }
+.calendar-icon { color: var(--red-progress); font-size: 1.5rem; }
+.chart-section { text-align: center; border-bottom: 1px solid #e0e0e0; padding-bottom: 20px; margin-bottom: 20px; }
+
+/* 甜甜圈圖表模擬 */
+.donut-chart-container { position: relative; width: 150px; height: 150px; margin: 0 auto 20px; }
+.donut-chart { width: 100%; height: 100%; border-radius: 50%; background: conic-gradient(#428bca 0% 15%, #d9534f 15% 35%, #5cb85c 35% 45%, #e0e0e0 45% 100%); position: relative; }
+.center-hole { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100px; height: 100px; background-color: var(--pale-yellow); border-radius: 50%; }
+.fat-percent { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.9rem; font-weight: bold; }
+
+/* 進度條模擬 */
+.progress-bar { flex-grow: 1; height: 10px; background-color: #e0e0e0; border-radius: 5px; position: relative; overflow: hidden; }
+.progress-bar::before { content: ''; position: absolute; top: 0; left: 0; height: 100%; border-radius: 5px; }
+.red-bar::before { background-color: var(--red-progress); width: 80%; }
+.blue-bar::before { background-color: var(--blue-progress); width: 60%; }
+.green-bar::before { background-color: var(--green-progress); width: 90%; }
+.orange-bar::before { background-color: var(--orange-progress); width: 50%; }
+
+/* 食物日誌卡片 */
+.food-log-card { flex: 1.2; position: relative; display: flex; flex-direction: column; gap: 20px; }
+.food-image { width: 60px; height: 60px; object-fit: cover; border-radius: 5px; }
+
+/* --- 設定頁面樣式 --- */
+.settings-page-layout { max-width: 1200px; margin: 0 auto; }
+.settings-content-wrapper { display: flex; max-width: 800px; margin: 40px auto; gap: 30px; }
+.profile-display-area { width: 250px; text-align: center; padding-top: 20px; }
+.profile-pic.large { width: 150px; height: 150px; margin: 0 auto 10px; background-size: 120%; }
+.user-name.large { font-size: 1.2rem; font-weight: bold; color: #555; margin-bottom: 30px; }
+
+.settings-card { background-color: var(--card-bg-color); padding: 30px; min-height: 400px; flex-grow: 1; box-shadow: 4px 4px 0 #999; border: 1px solid #999; }
+.handwritten-title { font-size: 1.5rem; font-weight: 900; margin-bottom: 20px; }
+.setting-item { display: flex; align-items: center; margin-bottom: 15px; }
+.setting-label { width: 180px; font-weight: bold; font-size: 1.1rem; }
+.handwritten-input { border: none; border-bottom: 2px solid var(--handwritten-ink); background: none; font-size: 1.3rem; padding: 0 5px; outline: none; flex-grow: 1; }
+.handwritten-input.small { font-size: 1.1rem; width: 80px; flex-grow: 0; text-align: right; }
+.handwritten-divider { border: none; border-top: 1px solid #d0d0d0; margin: 20px 0; }
+.logout-full-button.hidden-on-navbar { display: none; } /* 內容區的登出按鈕隱藏 */
+
+
+/* --- 響應式設計 (RWD) --- */
+@media (max-width: 900px) {
+    .top-navbar { padding: 15px 10px; }
+    .nav-menu { gap: 15px; }
+    .header-right { gap: 10px; }
+    .nav-item:not(.active) { display: none; }
+    .content-wrapper { flex-direction: column; }
+    .dashboard { padding: 10px; }
+    .settings-content-wrapper { flex-direction: column; margin: 20px auto; padding: 0 10px; }
+    .profile-display-area { display: none; }
+}
+
+@media (max-width: 600px) {
+    .card { padding: 15px; }
+    .nav-item { font-size: 1rem; }
+    .nav-icon { width: 30px; height: 30px; }
+    .dot-indicator { display: none; } 
+}
