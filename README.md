@@ -52,10 +52,10 @@
 2. 如何命名你的分支？
 請使用有意義的名稱，讓人一看就知道這個分支是做什麼的。
 
-> 任務類型	命名格式	範例
-> 新功能	feature/你的功能名稱	feature/user-profile-page
-> Bug 修復	fix/問題簡述	fix/login-401-error
-> 優化/重構	refactor/簡述內容	refactor/css-cleanup
+> **任務類型	命名格式	範例**
+> * 新功能	feature/你的功能名稱	feature/user-profile-page
+> * Bug 修復	fix/問題簡述	fix/login-401-error
+> * 優化/重構	refactor/簡述內容	refactor/css-cleanup
 
 3. 如何建立分支？
 請確保你的本地 main 分支是最新的，然後再切換並建立新的分支。
@@ -87,17 +87,17 @@ git push origin feature/your-new-feature
 ```
 
 2. 建立 Pull Request (PR)
-   1. 在 GitHub 頁面上，你會看到提示你建立 Pull Request (PR) 的選項。
-   2. 目標 (Target) 必須設定為： main
-   3. 標題和描述： 清楚說明你做了什麼、解決了什麼問題，以及你需要審查的重點。
-   4. 指派審查者 (Reviewer)： 請指派小組內的其他兩位成員作為你的程式碼審查者。
+* 在 GitHub 頁面上，你會看到提示你建立 Pull Request (PR) 的選項。
+* 目標 (Target) 必須設定為： main
+* 標題和描述： 清楚說明你做了什麼、解決了什麼問題，以及你需要審查的重點。
+* 指派審查者 (Reviewer)： 請指派小組內的其他兩位成員作為你的程式碼審查者。
 
 3. 程式碼審查與合併
 這是最關鍵的一步，確保 main 穩定性。
-   1. 審查者會仔細檢查你的程式碼，可能會留下問題或建議。
-   2. 你需要在你的功能分支上做出修改，並再次推送到 GitHub。
-   3. 當且僅當 所有審查者都核准 (Approve) 你的 PR 後，你才能執行 Merge (合併)。
-   4. 合併完成後： 務必在 GitHub 上刪除這個短期功能分支，保持倉庫整潔。
+* 審查者會仔細檢查你的程式碼，可能會留下問題或建議。
+* 你需要在你的功能分支上做出修改，並再次推送到 GitHub。
+* 當且僅當 所有審查者都核准 (Approve) 你的 PR 後，你才能執行 Merge (合併)。
+* 合併完成後： 務必在 GitHub 上刪除這個短期功能分支，保持倉庫整潔。
 
 四、常見問題與最佳實踐
 * 衝突 (Conflict) 怎麼辦？
