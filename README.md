@@ -1,5 +1,5 @@
 ### 所有頁面
-
+🔗 https://shaix0.github.io/Lab3_hw/ai_test.html
 * 主畫面: ai_test.html
 * 設定頁: ai_test_settings.html
 * css: test.css
