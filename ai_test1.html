@@ -281,7 +281,10 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, query, onSnapshot, addDoc, serverTimestamp, doc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, query, onSnapshot, addDoc, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // ⭐ 啟用 Firebase Debug Log 以便除錯權限問題 ⭐
+        setLogLevel('Debug'); 
         
         // 設置 Firebase/Firestore
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
@@ -292,41 +295,62 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
-        // setLogLevel('Debug'); // 開啟 Debug Log
+        
+        // 狀態追蹤
+        let currentUserId = null;
+        let isAuthReady = false; 
 
-        // 嘗試登入或匿名登入
-        async function authenticate() {
-            try {
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch (error) {
-                console.error("Firebase 認證失敗:", error);
-            }
-        }
-
-        authenticate();
-
-        // 將 Firestore 函式暴露給 React 範圍
-        window.firebaseApp = { db, auth, appId, collection, addDoc, serverTimestamp };
-        // 全域變數，用於儲存當日營養數據
+        // 將 Firestore 函式和狀態暴露給 React 範圍
+        window.firebaseApp = { db, auth, appId, collection, addDoc, serverTimestamp, get isAuthReady() { return isAuthReady; } };
         window.dailyNutritionData = { totalKcal: 0, foodList: [] };
         
         // ----------------------------------------------------
-        // ⭐ 儀表板動態資料讀取 (Food Log) ⭐
+        // ⭐ 身份驗證與狀態管理 (修正權限問題的關鍵) ⭐
+        // ----------------------------------------------------
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                // 已登入或自定義 Token 登入成功
+                currentUserId = user.uid;
+                isAuthReady = true;
+                
+                // ⭐ 將 userId 暴露給 React ⭐
+                window.firebaseApp.userId = currentUserId; 
+                
+                console.log(`Firebase 認證成功: ${currentUserId}.`);
+                
+                // 認證成功後才開始監聽資料
+                window.foodLogUnsubscribe = window.startFoodLogListener(currentUserId);
+
+            } else if (initialAuthToken) {
+                // 如果有初始 Token 但未登入，嘗試使用自定義 Token 登入
+                try {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } catch (error) {
+                    console.error("自定義 Token 登入失敗:", error);
+                    // 失敗後，嘗試匿名登入
+                    await signInAnonymously(auth); 
+                }
+            } else {
+                // 如果沒有 Token，則匿名登入
+                try {
+                    await signInAnonymously(auth);
+                } catch (error) {
+                    console.error("匿名登入失敗:", error);
+                }
+            }
+        });
+
+        // ----------------------------------------------------
+        // ⭐ 儀表板動態資料讀取 (Food Log Listener) ⭐
         // ----------------------------------------------------
         window.startFoodLogListener = function(userId) {
+            // ⭐ 假設使用 Private Data path: /artifacts/{appId}/users/{userId}/foodLog ⭐
             const collectionPath = `/artifacts/${appId}/users/${userId}/foodLog`;
             const foodLogRef = collection(db, collectionPath);
             
-            // 查詢最近記錄的餐點
-            const q = query(foodLogRef); 
-
             console.log(`正在監聽 Firestore 路徑: ${collectionPath}`);
 
-            return onSnapshot(q, (snapshot) => {
+            return onSnapshot(foodLogRef, (snapshot) => {
                 let logs = snapshot.docs.map(doc => ({
                     id: doc.id,
                     ...doc.data()
@@ -339,20 +363,16 @@
                     return timeB - timeA;
                 });
                 
-                // ⭐ 新增：計算當日總結數據 ⭐
+                // 計算總結數據
                 let totalKcal = 0;
                 let foodList = [];
                 
                 logs.forEach(log => {
-                    // **優化：更穩健地從分析文本中提取數據**
                     const analysisText = log.analysis || "";
-                    
-                    // 1. 提取卡路里估計
                     const kcalMatch = analysisText.match(/卡路里：(\d+)\s*kcal/);
                     const kcal = kcalMatch ? parseInt(kcalMatch[1], 10) : 0;
                     totalKcal += kcal;
                     
-                    // 2. 提取食物名稱（從識別列表或備註中）
                     let foodName = '未知餐點';
                     const foodNameMatch = analysisText.match(/識別的食物列表：(.+)/);
                     if (foodNameMatch) {
@@ -361,22 +381,19 @@
                         foodName = log.foodName;
                     }
 
-                    // 檢查食物名稱是否已經存在，避免重複顯示 (簡易去重)
                     if (foodName && !foodList.find(f => f.name === foodName)) {
                         foodList.push({ name: foodName, kcal: kcal });
                     }
                 });
                 
-                // 更新全域變數
                 window.dailyNutritionData = { 
                     totalKcal: totalKcal, 
                     foodList: foodList 
                 };
                 
-                // 渲染儀表板
                 renderFoodLogs(logs);
             }, (error) => {
-                console.error("FoodLog 監聽失敗:", error);
+                console.error("FoodLog 監聽失敗 (可能是由於權限問題):", error);
                 renderFoodLogs([]); // 載入失敗時顯示空
             });
         };
@@ -396,13 +413,11 @@
             logs.forEach(log => {
                 const div = document.createElement('div');
                 div.className = 'food-entry-db';
-                div.onclick = () => showLogDetails(log.id, log.analysis, log.imageUrl); // 點擊時顯示細節
+                div.onclick = () => showLogDetails(log.id, log.analysis, log.imageUrl); 
                 
-                // 嘗試從 analysis 文本中提取第一個食物名稱作為標題
                 const foodNameMatch = log.analysis ? log.analysis.match(/識別的食物列表：(.+)/) : null;
                 const foodName = foodNameMatch ? foodNameMatch[1].split(/[,\n]/)[0].trim() : (log.foodName || 'AI 分析結果');
                 
-                // 嘗試從 analysis 文本中提取卡路里估計
                 const kcalMatch = log.analysis ? log.analysis.match(/卡路里：(\d+)\s*kcal/) : null;
                 const kcal = kcalMatch ? kcalMatch[1] : '...';
 
@@ -424,39 +439,20 @@
             });
         }
         
-        // 啟動認證與監聽
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                const userId = user.uid;
-                // 儲存 userId 供 React 存取
-                window.firebaseApp.userId = userId;
-                
-                // 儀表板啟動監聽器
-                window.foodLogUnsubscribe = window.startFoodLogListener(userId);
-                console.log(`使用者已認證: ${userId}.`);
-            } else {
-                 console.log("使用者未認證。");
-                 window.firebaseApp.userId = crypto.randomUUID(); // Fallback
-            }
-        });
-
         // ----------------------------------------------------
         // ⭐ 外部 HTML 控制函式 (與 React 橋接) ⭐
         // ----------------------------------------------------
         
-        // 導向至 React 模態視窗並設定模式 (File/Camera)
         window.showReactModal = function(mode) {
-            document.getElementById('actionMenu').classList.add('hidden'); // 隱藏選單
+            document.getElementById('actionMenu').classList.add('hidden'); 
             const reactRoot = document.getElementById('react-app-root');
             reactRoot.classList.remove('hidden');
 
-            // 呼叫 React 暴露出來的函式，通知 App 開始處理特定的輸入模式
             if (window.setExternalTriggerMode) {
                 window.setExternalTriggerMode(mode);
             }
         }
         
-        // 導向至 React 模態視窗並設定模式 (Report)
         window.showReportModal = function() {
             document.getElementById('actionMenu')?.classList.add('hidden'); 
             const reactRoot = document.getElementById('react-app-root');
@@ -470,21 +466,23 @@
         window.closeReactModal = function() {
             document.getElementById('react-app-root').classList.add('hidden');
             if (window.setExternalTriggerMode) {
-                window.setExternalTriggerMode(null); // 重設模式
+                window.setExternalTriggerMode(null); 
             }
         };
 
-        // 假細節頁面 (顯示報告細節)
         window.showLogDetails = function(logId, analysisText, imageUrl) {
             if (window.showDetailsInModal) {
                  window.showDetailsInModal(logId, analysisText, imageUrl);
             } else {
-                alert(`餐點 ID: ${logId}\n\n分析報告：\n${analysisText}`);
+                // 使用自定義模態視窗代替 alert()
+                const details = `餐點 ID: ${logId}\n\n分析報告：\n${analysisText}`;
+                console.log(details); 
+                alert("詳細報告已輸出至控制台。");
             }
         }
     </script>
 
-    <!-- 浮動按鈕的點擊事件監聽 (使用 window.onload 確保元素已載入) -->
+    <!-- 浮動按鈕的點擊事件監聽 -->
     <script>
         window.onload = function() {
             const addButton = document.getElementById('addButton');
@@ -493,7 +491,6 @@
                     const actionMenu = document.getElementById('actionMenu');
                     if (actionMenu) {
                         actionMenu.classList.toggle('hidden');
-                        // ⭐ 這是控制台輸出，讓您確認點擊是否觸發 ⭐
                         if (actionMenu.classList.contains('hidden')) {
                             console.log('點擊 + 號: 隱藏選單');
                         } else {
@@ -512,7 +509,7 @@
 <body>
     <!-- 導航列 -->
     <header class="top-navbar">
-        <!-- ⭐ 簡化導航：只保留日誌 ⭐ -->
+        <!-- 簡化導航：只保留日誌 -->
         <div class="nav-menu">
             <a href="#" class="nav-item active">日誌</a>
         </div>
@@ -605,13 +602,12 @@
     
     <script type="text/babel">
         const { useState, useEffect, useRef, useCallback } = React;
-        const { db, auth, appId, collection, addDoc, serverTimestamp } = window.firebaseApp || {};
+        const { db, appId, collection, addDoc, serverTimestamp } = window.firebaseApp || {};
         
-        // **⭐ 禁用 API 相關設定 ⭐**
+        // 禁用 API 相關設定
         const apiKey = ""; 
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
 
-        // 輔助函數：將 File 物件轉換為 Base64 字串
         const fileToBase64 = (file) => {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -624,8 +620,8 @@
         };
         
         const getMimeType = (file) => file.type || 'image/jpeg';
-
-        // 輔助函數：帶有指數退避的 fetch (在禁用模式下不使用)
+        
+        // 模擬的 API 呼叫 (功能已暫停)
         const fetchWithRetry = async (url, options, retries = 3) => {
             console.warn("API 呼叫功能已暫時禁用，將使用模擬數據。");
             return new Promise(resolve => setTimeout(() => resolve({
@@ -638,11 +634,7 @@
         // 核心 AI 營養分析應用程式組件
         // -----------------------------------------------------
 
-        /**
-         * ReportPage 組件：顯示 AI 生成的每日營養報告
-         */
         function ReportPage({ report, isLoading, resetApp, handleGenerateDailyReport }) {
-            // 使用 marked.parse 將 Markdown 轉換為 HTML
             const reportHtml = report ? marked.parse(report) : null;
             
             return (
@@ -666,7 +658,6 @@
                     {report && (
                         <>
                             <div className="border border-gray-300 bg-white p-5 rounded-xl shadow-inner flex-grow overflow-y-auto">
-                                {/* 使用 dangerouslySetInnerHTML 來渲染由 marked.js 解析的 Markdown 內容 */}
                                 <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: reportHtml }}></div>
                             </div>
                             <div className="flex justify-end pt-2">
@@ -692,9 +683,6 @@
             );
         }
 
-        /**
-         * DetailModal 組件：顯示餐點詳細報告
-         */
         function DetailModal({ logId, analysisText, imageUrl, onClose }) {
             const detailHtml = analysisText ? marked.parse(analysisText) : "無詳細分析報告。";
             
@@ -730,8 +718,6 @@
         function App() {
             const [page, setPage] = useState("home"); 
             const [imageUrl, setImageUrl] = useState(""); 
-            const [base64Image, setBase64Image] = useState(""); 
-            const [imageMimeType, setImageMimeType] = useState(""); 
             const [chat, setChat] = useState([]);
             const [input, setInput] = useState("");
             const [isLoading, setIsLoading] = useState(false); 
@@ -739,9 +725,7 @@
             const [triggerMode, setTriggerMode] = useState(null); 
             const [userId, setUserId] = useState(null); 
             const [dailyReport, setDailyReport] = useState(null); 
-            
-            // 用於詳細報告模態框
-            const [detailModal, setDetailModal] = useState(null); // {logId, analysisText, imageUrl}
+            const [detailModal, setDetailModal] = useState(null); 
 
             const fileInputRef = useRef(null);
             
@@ -750,7 +734,7 @@
                 window.setExternalTriggerMode = (mode) => {
                     setTriggerMode(mode);
                     setDailyReport(null); 
-                    setDetailModal(null); // 關閉主模態時也確保細節模態關閉
+                    setDetailModal(null); 
                     if (mode === 'report') {
                         setPage("report");
                     } else if (mode === 'file' || mode === 'camera') {
@@ -762,11 +746,13 @@
                     setDetailModal({ logId, analysisText, imageUrl });
                 };
 
-                // 獲取 userId
+                // ⭐ 修正: 等待原生 JS 完成身份驗證後才設定 userId ⭐
                 const checkUser = setInterval(() => {
-                    if (window.firebaseApp?.userId) {
+                    // 只有當 window.firebaseApp.userId 存在且不是預設值時才設定
+                    if (window.firebaseApp && window.firebaseApp.userId && window.firebaseApp.isAuthReady) {
                         setUserId(window.firebaseApp.userId);
                         clearInterval(checkUser);
+                        console.log("React 已獲取使用者 ID 並就緒。");
                     }
                 }, 100);
                 return () => clearInterval(checkUser);
@@ -775,8 +761,6 @@
             const resetApp = useCallback(() => {
                 setPage("home");
                 setImageUrl("");
-                setBase64Image("");
-                setImageMimeType("");
                 setChat([]);
                 setInput("");
                 setError(null);
@@ -786,19 +770,15 @@
                 window.closeReactModal();
             }, []);
 
-            // 外部觸發時的邏輯 (例如點擊「拍照」或「選擇檔案」按鈕)
             useEffect(() => {
                 if (triggerMode === 'file' || triggerMode === 'camera') {
-                    // 給 HTML 元素一點時間完成初始化
                     setTimeout(() => fileInputRef.current.click(), 100);
                 } else if (triggerMode === 'report') {
                     handleGenerateDailyReport();
                 }
-            }, [triggerMode]);
+            }, [triggerMode, handleGenerateDailyReport]); // 依賴 handleGenerateDailyReport 以確保在報告模式下正確運行
 
-            /**
-             * 處理檔案上傳
-             */
+
             const handleUpload = async (fileToUpload) => {
                 if (!fileToUpload) return resetApp();
 
@@ -806,15 +786,14 @@
                 setError(null);
 
                 try {
-                    // 使用 URL.createObjectURL 創建可顯示的圖片 URL
                     const objectUrl = URL.createObjectURL(fileToUpload);
                     setImageUrl(objectUrl);
                     
-                    const base64 = await fileToBase64(fileToUpload);
-                    
-                    setBase64Image(base64);
-                    setImageMimeType(getMimeType(fileToUpload));
-                    setPage("analyze"); // 進入分析確認頁面
+                    // 這裡不需要 Base64 轉換，因為 AI 功能已暫停
+                    // const base64 = await fileToBase64(fileToUpload); 
+                    // setBase64Image(base64);
+                    // setImageMimeType(getMimeType(fileToUpload));
+                    setPage("analyze"); 
 
                 } catch (e) {
                     console.error("檔案處理失敗:", e);
@@ -825,23 +804,22 @@
                 }
             };
 
-            // --------------------------------------------------
-            // ⭐ 模擬功能一：圖像分析與對話 ⭐
-            // --------------------------------------------------
+            // 模擬 AI 分析結果
             const handleAnalyze = async () => {
                 setIsLoading(true);
                 setError(null);
                 
-                // ⭐ 模擬 AI 分析結果 ⭐
+                // 模擬 AI 分析結果
                 const mockAnalysis = `**AI 系統已暫停分析功能。這餐估計為：**\n\n- **識別的食物列表**：烤雞胸肉, 糙米飯, 蒸花椰菜\n- **估計的卡路里**：450 kcal\n- **三大營養素**：蛋白質高, 脂肪低, 碳水適中\n- **飲食建議**：蛋白質攝取充足，是很健康的均衡餐點！建議飯後搭配一杯水。`;
                 
                 setTimeout(() => {
                     setChat([{ role: "system", content: mockAnalysis }]);
-                    setPage("chat"); // 進入對話頁面
+                    setPage("chat"); 
                     setIsLoading(false);
-                }, 1500); // 模擬網路延遲
+                }, 1500); 
             };
             
+            // 模擬 AI 聊天回覆
             const handleChat = async () => {
                 if (!input.trim() || isLoading) return;
                 const userMessage = input.trim();
@@ -851,7 +829,6 @@
                 setInput("");
                 setIsLoading(true);
 
-                // ⭐ 模擬 AI 聊天回覆 ⭐
                 const mockReply = "AI 聊天功能已暫停。請您先完成餐點記錄。若有進一步疑問，請在功能啟用後提問！";
 
                 setTimeout(() => {
@@ -864,31 +841,33 @@
              * 確認並記錄餐點到 Firestore
              */
             const handleLogMeal = async () => {
-                if (!userId || !db) {
-                    setError("未登入使用者或資料庫連線失敗，無法記錄餐點。");
+                // ⭐ 關鍵修正點：檢查 userId 和 Firebase 連線是否就緒 ⭐
+                if (!userId || !db || !window.firebaseApp.isAuthReady) {
+                    setError("使用者身份驗證尚未完成，請稍候再試。");
                     return;
                 }
                 setIsLoading(true);
                 setError(null);
                 
                 try {
-                    // **確認儲存**：將第一個 AI 回覆（即分析報告）儲存為 analysis 欄位
                     const analysisText = chat[0]?.content || "AI 未能提供分析結果。"; 
                     
+                    // ⭐ 使用私人資料路徑: /artifacts/{appId}/users/{userId}/foodLog ⭐
                     const foodLogCollection = collection(db, `/artifacts/${appId}/users/${userId}/foodLog`);
                     
-                    // 記錄數據
                     await addDoc(foodLogCollection, {
                         imageUrl: imageUrl,
-                        analysis: analysisText, // ⭐ 儲存完整的分析結果 ⭐
+                        analysis: analysisText, 
                         timestamp: serverTimestamp(),
                         fullChatLog: JSON.stringify(chat), 
                     });
                     
-                    // 注意：這裡使用 alert() 是為了展示成功，實際應用應替換為模態視窗
+                    // 使用自定義訊息框代替 alert()
+                    console.log("餐點已成功記錄到您的日誌！");
                     alert("餐點已成功記錄到您的日誌！請在儀表板查看。"); 
                     resetApp(); 
                 } catch (e) {
+                    // 記錄錯誤，包括權限錯誤
                     console.error("記錄餐點失敗:", e);
                     setError(`餐點記錄失敗: ${e.message}。`);
                 } finally {
@@ -896,15 +875,12 @@
                 }
             };
 
-            // --------------------------------------------------
-            // ⭐ 模擬功能二：每日報告生成 ⭐
-            // --------------------------------------------------
-            const handleGenerateDailyReport = async () => {
+            // 模擬每日報告生成
+            const handleGenerateDailyReport = useCallback(async () => {
                 setIsLoading(true);
                 setError(null);
                 setDailyReport(null); 
 
-                // 從原生 JS 獲取數據
                 const { totalKcal, foodList } = window.dailyNutritionData || { totalKcal: 0, foodList: [] };
                 
                 if (foodList.length === 0) {
@@ -913,16 +889,13 @@
                     return;
                 }
                 
-                // ⭐ 模擬 AI 報告結果 (Markdown 格式) ⭐
                 const mockReport = `## 每日營養總結報告 (模擬結果)\n\n**親愛的使用者，您好！**\n\n感謝您記錄今天的餐點。今天總熱量攝取約為 **${totalKcal} kcal**。\n\n### 🍏 今天的飲食亮點\n\n- **數據模擬，僅供參考**：根據系統模擬數據，您今天在蛋白質的攝取上表現出色，有助於維持肌肉量。\n- **餐點多樣性**：您記錄了 ${foodList.length} 份餐點，看起來飲食多樣化做得不錯。\n\n### ⚠️ 建議改善或調整的方面\n\n- **水份與纖維**：模擬顯示，您可能需要增加蔬菜和水果的份量，以確保足夠的膳食纖維攝取。\n- **脂肪分配**：雖然總脂肪量可能在控制範圍，但請盡量選擇不飽和脂肪來源（如堅果、酪梨）。\n\n### ✨ 您的明日健康目標\n\n明天試著在早餐時**多吃一份水果**（例如一個蘋果或一根香蕉），為身體注入天然能量！\n`;
 
                 setTimeout(() => {
                     setDailyReport(mockReport);
                     setIsLoading(false);
-                }, 2000); // 模擬網路延遲
-            };
-            // --------------------------------------------------
-
+                }, 2000); 
+            }, []); // 確保這個函式只在組件首次渲染時創建
 
             const handleFileChange = (e) => {
                  if (e.target.files[0]) {
@@ -933,17 +906,14 @@
             };
             
             const hiddenFileInput = (
-                // 隱藏的檔案選擇輸入，用於觸發選擇檔案或相機
                 <input 
                     type="file" 
                     ref={fileInputRef} 
                     id="file-input"
                     accept="image/*" 
-                    // 根據當前模式決定是否開啟相機
                     capture={triggerMode === 'camera' ? 'environment' : null} 
                     onChange={handleFileChange}
                     className="hidden" 
-                    // 確保每次都能觸發 change 事件
                     onClick={(e) => { e.target.value = null; }}
                 />
             );
@@ -951,7 +921,6 @@
             let content;
             
             if (triggerMode === 'report') {
-                // 報告模式
                 content = <ReportPage 
                             report={dailyReport} 
                             isLoading={isLoading} 
@@ -959,7 +928,6 @@
                             handleGenerateDailyReport={handleGenerateDailyReport} 
                           />;
             } else if (page === "analyze") {
-                // 分析確認頁面 (File/Camera 流程)
                 content = (
                     <div className="text-center space-y-6">
                         <button 
@@ -991,7 +959,6 @@
                     </div>
                 );
             } else if (page === "chat") {
-                // 分析結果與對話頁面 (File/Camera 流程)
                 content = (
                     <div className="space-y-4">
                         <button 
@@ -1002,7 +969,6 @@
                         </button>
                         <h2 className="text-2xl font-bold text-gray-800 border-b pb-2">AI 營養分析結果 (模擬)</h2>
                         
-                        {/* 對話框 */}
                         <div className="border border-gray-300 bg-gray-50 h-80 overflow-y-auto p-4 rounded-lg space-y-3">
                             <img
                                 src={imageUrl}
@@ -1020,7 +986,6 @@
                             ))}
                         </div>
                         
-                        {/* 輸入框與按鈕 */}
                         <div className="flex gap-2">
                             <input
                                 value={input}
@@ -1039,7 +1004,6 @@
                             </button>
                         </div>
                         
-                        {/* 確認並記錄按鈕 */}
                         <div className="flex justify-between gap-4 mt-6">
                             <button
                                 onClick={resetApp}
@@ -1050,7 +1014,7 @@
                             <button 
                                 onClick={handleLogMeal}
                                 className="w-2/3 py-3 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition duration-150 shadow-lg font-bold"
-                                disabled={isLoading || chat.length === 0}
+                                disabled={isLoading || chat.length === 0 || !userId} // 禁用直到 userId 準備好
                             >
                                 <i className="fas fa-check-circle mr-2"></i>確認並記錄餐點
                             </button>
@@ -1058,7 +1022,6 @@
                     </div>
                 );
             } else {
-                // Home/Wait 頁面 (等待觸發 File/Camera 或 Report)
                 content = (
                     <div className="text-center space-y-8 py-10">
                         <button 
