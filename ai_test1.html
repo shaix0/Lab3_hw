@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>營養追蹤儀表板</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="test.css">
+    
+    <style>
+        /* 確保字體統一 */
+        :root { font-family: 'Inter', sans-serif; }
+        /* 浮動按鈕和菜單的定位 */
+        .food-log-card { position: relative; min-height: 400px; } 
+        .add-button { position: absolute; bottom: 20px; right: 20px; z-index: 10; }
+        .action-menu-popup { position: absolute; bottom: 90px; right: 20px; z-index: 10; }
+        .action-menu-popup.hidden { display: none !important; }
+        .hidden { display: none !important; } /* Tailwind 的 hidden class 確保兼容 */
+
+        /* 您的其他 test.css 樣式會在這裡發揮作用 */
+    </style>
+</head>
+<body>
+    
+    <div id="dashboard-container">
+        <header class="top-navbar">
+            <div class="nav-menu">
+                <a href="dashboard.html" class="nav-item active">日誌</a>
+                <a href="#" class="nav-item">趨勢</a>
+                <a href="#" class="nav-item">食譜</a>
+            </div>
+
+            <div class="header-right">
+                <a href="ai_test_settings.html" title="設定"><div class="profile-pic nav-icon"></div></a>
+            </div>
+        </header>
+
+        <main class="dashboard full-width-layout">
+            <div class="content-wrapper">
+                
+                <div class="card nutrition-report">
+                    <div class="card-header">
+                        <span class="date">2025.09.30</span>
+                        <i class="fa-solid fa-calendar-day calendar-icon"></i>
+                    </div>
+                    <div class="chart-section">
+                        <div class="donut-chart-container"><div class="donut-chart"><div class="center-hole"></div></div><span class="fat-percent">脂肪 5%</span></div>
+                        <p class="recommendation">成人每日建議營養攝取量</p>
+                        <a href="settings.html" class="report-link">設定健康目標 查看完整報告 →</a>
+                    </div>
+                    <div class="progress-section">
+                        <div class="progress-item"><div class="progress-label">碳水</div><div class="progress-bar red-bar"></div></div>
+                        <div class="progress-item"><div class="progress-label">蛋白質</div><div class="progress-bar blue-bar"></div></div>
+                        <div class="progress-item"><div class="progress-label">脂肪</div><div class="progress-bar green-bar"></div></div>
+                        <div class="progress-item"><div class="progress-label">卡路里</div><div class="progress-bar orange-bar"></div></div>
+                    </div>
+                </div>
+
+                <div class="card food-log-card">
+                    <div class="food-entry">
+                        <p class="food-name-handwritten">薯條</p>
+                        <div class="food-details"><img src="未命名的作品.jpg" alt="薯條" class="food-image"></div>
+                    </div>
+                    <div class="food-entry">
+                        <p class="food-name-handwritten">飯</p>
+                        <div class="food-details"><img src="未命名的作品.jpg" alt="飯" class="food-image"></div>
+                    </div>
+                    
+                    <div id="actionMenu" class="action-menu-popup hidden">
+                        <button class="menu-item"><i class="fa-solid fa-image"></i> 照片圖庫</button> 
+                        
+                        <button class="menu-item" onclick="showReactAnalysisModal()"><i class="fa-solid fa-camera"></i> 拍照</button>
+                        
+                        <button class="menu-item" onclick="showReactAnalysisModal()"><i class="fa-solid fa-magnifying-glass"></i> 選擇檔案</button>
+                    </div>
+                    
+                    <button id="addButton" class="add-button"><i class="fa-solid fa-plus"></i></button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div 
+        id="react-app-root" 
+        class="hidden fixed inset-0 z-50 bg-gray-50/95 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity duration-300"
+    >
+        </div>
+    
+    <script>
+        // 1. 浮動菜單的開關邏輯 (保留)
+        document.getElementById('addButton').addEventListener('click', function() {
+            document.getElementById('actionMenu').classList.toggle('hidden');
+        });
+
+        // 2. 啟動 React 分析模組的邏輯
+        function showReactAnalysisModal() {
+            // 隱藏浮動菜單
+            document.getElementById('actionMenu').classList.add('hidden');
+            
+            // 顯示 React 掛載點 (全螢幕浮層)
+            const reactRoot = document.getElementById('react-app-root');
+            reactRoot.classList.remove('hidden');
+            
+            // ⭐ 【給 React 的提示】⭐
+            // 如果您的 App.jsx 在渲染時需要知道它是被「拍照」還是「上傳檔案」觸發的，
+            // 您可能需要使用 URL 參數或 localStorage 在這裡傳遞一個狀態給 React。
+        }
+
+        // 3. 關閉 React 模組的範例函式 (App.jsx 應該在分析流程結束或取消時呼叫此函式)
+        window.closeReactAnalysisModal = function() {
+            document.getElementById('react-app-root').classList.add('hidden');
+        };
+
+    </script>
+</body>
+</html>
