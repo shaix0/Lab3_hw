@@ -283,7 +283,7 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, query, onSnapshot, addDoc, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
-        // ⭐ 啟用 Firebase Debug Log 以便除錯權限問題 ⭐
+        // 啟用 Firebase Debug Log 以便除錯權限問題
         setLogLevel('Debug'); 
         
         // 設置 Firebase/Firestore
@@ -305,7 +305,7 @@
         window.dailyNutritionData = { totalKcal: 0, foodList: [] };
         
         // ----------------------------------------------------
-        // ⭐ 身份驗證與狀態管理 (修正權限問題的關鍵) ⭐
+        // 身份驗證與狀態管理 
         // ----------------------------------------------------
         onAuthStateChanged(auth, async (user) => {
             if (user) {
@@ -313,7 +313,7 @@
                 currentUserId = user.uid;
                 isAuthReady = true;
                 
-                // ⭐ 將 userId 暴露給 React ⭐
+                // 將 userId 暴露給 React
                 window.firebaseApp.userId = currentUserId; 
                 
                 console.log(`Firebase 認證成功: ${currentUserId}.`);
@@ -327,7 +327,7 @@
                     await signInWithCustomToken(auth, initialAuthToken);
                 } catch (error) {
                     console.error("自定義 Token 登入失敗:", error);
-                    // 失敗後，嘗試匿名登入
+                    // 失敗後，嘗試匿名登入（作為備用）
                     await signInAnonymously(auth); 
                 }
             } else {
@@ -341,10 +341,10 @@
         });
 
         // ----------------------------------------------------
-        // ⭐ 儀表板動態資料讀取 (Food Log Listener) ⭐
+        // 儀表板動態資料讀取 (Food Log Listener)
         // ----------------------------------------------------
         window.startFoodLogListener = function(userId) {
-            // ⭐ 假設使用 Private Data path: /artifacts/{appId}/users/{userId}/foodLog ⭐
+            // 使用 Private Data path: /artifacts/{appId}/users/{userId}/foodLog
             const collectionPath = `/artifacts/${appId}/users/${userId}/foodLog`;
             const foodLogRef = collection(db, collectionPath);
             
@@ -363,7 +363,7 @@
                     return timeB - timeA;
                 });
                 
-                // 計算總結數據
+                // 計算總結數據 (省略細節，假設您有計算邏輯)
                 let totalKcal = 0;
                 let foodList = [];
                 
@@ -413,7 +413,8 @@
             logs.forEach(log => {
                 const div = document.createElement('div');
                 div.className = 'food-entry-db';
-                div.onclick = () => showLogDetails(log.id, log.analysis, log.imageUrl); 
+                // 使用 addEventListener 避免 ReferenceError
+                div.addEventListener('click', () => window.showLogDetails(log.id, log.analysis, log.imageUrl)); 
                 
                 const foodNameMatch = log.analysis ? log.analysis.match(/識別的食物列表：(.+)/) : null;
                 const foodName = foodNameMatch ? foodNameMatch[1].split(/[,\n]/)[0].trim() : (log.foodName || 'AI 分析結果');
@@ -438,16 +439,20 @@
                 container.appendChild(div);
             });
         }
-        
+
         // ----------------------------------------------------
-        // ⭐ 外部 HTML 控制函式 (與 React 橋接) ⭐
+        // 外部 HTML 控制函式 (與 React 橋接)
         // ----------------------------------------------------
         
         window.showReactModal = function(mode) {
+            // 隱藏操作選單
             document.getElementById('actionMenu').classList.add('hidden'); 
+            
+            // 顯示 React 浮層
             const reactRoot = document.getElementById('react-app-root');
             reactRoot.classList.remove('hidden');
 
+            // 通知 React 啟動特定模式
             if (window.setExternalTriggerMode) {
                 window.setExternalTriggerMode(mode);
             }
@@ -482,27 +487,29 @@
         }
     </script>
 
-    <!-- 浮動按鈕的點擊事件監聽 -->
+    <!-- 浮動按鈕與菜單的事件監聽 (非 module 腳本) -->
     <script>
         window.onload = function() {
             const addButton = document.getElementById('addButton');
+            const actionMenu = document.getElementById('actionMenu');
+            
+            // --- 1. Menu Toggle Logic (+ 號按鈕) ---
             if (addButton) {
                  addButton.addEventListener('click', function() {
-                    const actionMenu = document.getElementById('actionMenu');
                     if (actionMenu) {
                         actionMenu.classList.toggle('hidden');
-                        if (actionMenu.classList.contains('hidden')) {
-                            console.log('點擊 + 號: 隱藏選單');
-                        } else {
-                            console.log('點擊 + 號: 顯示選單');
-                        }
-                    } else {
-                        console.error('錯誤: 找不到 actionMenu 元素。');
                     }
                 });
-            } else {
-                console.error('錯誤: 找不到 addButton 元素。');
             }
+
+            // --- 2. Menu Item Click Handlers (解決 ReferenceError 的關鍵) ---
+            // 綁定所有菜單項，它們將調用在 <script type="module"> 中定義的 window.showReactModal
+            document.getElementById('menu-photo')?.addEventListener('click', () => window.showReactModal('file'));
+            document.getElementById('menu-camera')?.addEventListener('click', () => window.showReactModal('camera'));
+            document.getElementById('menu-upload')?.addEventListener('click', () => window.showReactModal('file'));
+
+            // --- 3. Report Button Handler ---
+            document.getElementById('reportButton')?.addEventListener('click', () => window.showReportModal());
         };
     </script>
 </head>
@@ -546,9 +553,9 @@
                     <div class="progress-item"><div class="progress-label">卡路里</div><div class="progress-bar orange-bar"></div></div>
                 </div>
                 
-                <!-- AI 報告按鈕 -->
+                <!-- AI 報告按鈕 (移除 onclick，改用 JS 綁定) -->
                 <button 
-                    onclick="showReportModal()" 
+                    id="reportButton" 
                     class="mt-4 w-full py-2 px-4 bg-indigo-500 text-white rounded-xl font-semibold hover:bg-indigo-600 transition duration-150 shadow-lg text-sm flex items-center justify-center"
                 >
                     <span class="text-xl mr-2">✨</span> AI 每日報告與建議
@@ -569,7 +576,7 @@
                     </div>
                 </div>
 
-                <!-- ⭐ 動態資料載入點 ⭐ -->
+                <!-- 動態資料載入點 -->
                 <div id="food-log-entries-dynamic" class="food-log-entries-container mt-4 pt-4 border-t border-gray-200">
                     <p class="text-center text-gray-500 py-4 italic text-sm">正在載入餐點記錄...</p>
                 </div>
@@ -579,14 +586,14 @@
     
     <!-- 浮動按鈕與選單 -->
     <div id="actionMenu" class="action-menu-popup hidden">
-        <!-- 照片圖庫 和 選擇檔案 都導向 'file' 模式，拍照導向 'camera' 模式 -->
-        <button class="menu-item" onclick="showReactModal('file')"><i class="fa-solid fa-image"></i> 照片圖庫</button>
-        <button class="menu-item" onclick="showReactModal('camera')"><i class="fa-solid fa-camera"></i> 拍照</button>
-        <button class="menu-item" onclick="showReactModal('file')"><i class="fa-solid fa-upload"></i> 選擇檔案</button>
+        <!-- 移除 onclick 屬性，改用 JS 監聽 -->
+        <button class="menu-item" id="menu-photo"><i class="fa-solid fa-image"></i> 照片圖庫</button>
+        <button class="menu-item" id="menu-camera"><i class="fa-solid fa-camera"></i> 拍照</button>
+        <button class="menu-item" id="menu-upload"><i class="fa-solid fa-upload"></i> 選擇檔案</button>
     </div>
     <button id="addButton" class="add-button"><i class="fa-solid fa-plus"></i></button>
 
-    <!-- ⭐ React 應用程式的浮層掛載點 (使用 Tailwind 居中和樣式) ⭐ -->
+    <!-- React 應用程式的浮層掛載點 -->
     <div 
         id="react-app-root" 
         class="hidden fixed inset-0 z-50 bg-gray-50/95 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity duration-300"
@@ -746,7 +753,7 @@
                     setDetailModal({ logId, analysisText, imageUrl });
                 };
 
-                // ⭐ 修正: 等待原生 JS 完成身份驗證後才設定 userId ⭐
+                // 等待原生 JS 完成身份驗證後才設定 userId
                 const checkUser = setInterval(() => {
                     // 只有當 window.firebaseApp.userId 存在且不是預設值時才設定
                     if (window.firebaseApp && window.firebaseApp.userId && window.firebaseApp.isAuthReady) {
@@ -772,11 +779,15 @@
 
             useEffect(() => {
                 if (triggerMode === 'file' || triggerMode === 'camera') {
-                    setTimeout(() => fileInputRef.current.click(), 100);
+                    // 確保檔案輸入框是空的，然後觸發點擊
+                    if (fileInputRef.current) {
+                        fileInputRef.current.value = null; // 重置 file input
+                        fileInputRef.current.click();
+                    }
                 } else if (triggerMode === 'report') {
                     handleGenerateDailyReport();
                 }
-            }, [triggerMode, handleGenerateDailyReport]); // 依賴 handleGenerateDailyReport 以確保在報告模式下正確運行
+            }, [triggerMode, handleGenerateDailyReport]); 
 
 
             const handleUpload = async (fileToUpload) => {
@@ -841,7 +852,7 @@
              * 確認並記錄餐點到 Firestore
              */
             const handleLogMeal = async () => {
-                // ⭐ 關鍵修正點：檢查 userId 和 Firebase 連線是否就緒 ⭐
+                // 關鍵修正點：檢查 userId 和 Firebase 連線是否就緒
                 if (!userId || !db || !window.firebaseApp.isAuthReady) {
                     setError("使用者身份驗證尚未完成，請稍候再試。");
                     return;
@@ -852,7 +863,7 @@
                 try {
                     const analysisText = chat[0]?.content || "AI 未能提供分析結果。"; 
                     
-                    // ⭐ 使用私人資料路徑: /artifacts/{appId}/users/{userId}/foodLog ⭐
+                    // 使用私人資料路徑: /artifacts/{appId}/users/{userId}/foodLog
                     const foodLogCollection = collection(db, `/artifacts/${appId}/users/${userId}/foodLog`);
                     
                     await addDoc(foodLogCollection, {
@@ -895,7 +906,7 @@
                     setDailyReport(mockReport);
                     setIsLoading(false);
                 }, 2000); 
-            }, []); // 確保這個函式只在組件首次渲染時創建
+            }, []); 
 
             const handleFileChange = (e) => {
                  if (e.target.files[0]) {
@@ -911,10 +922,19 @@
                     ref={fileInputRef} 
                     id="file-input"
                     accept="image/*" 
+                    // 根據 triggerMode 啟用相機
                     capture={triggerMode === 'camera' ? 'environment' : null} 
                     onChange={handleFileChange}
                     className="hidden" 
-                    onClick={(e) => { e.target.value = null; }}
+                    onClick={(e) => { 
+                         // 確保在觸發 click 事件時，如果用戶點擊了 "拍照"，capture 屬性生效
+                         if (triggerMode === 'camera') {
+                             e.target.setAttribute('capture', 'environment');
+                         } else {
+                             e.target.removeAttribute('capture');
+                         }
+                         e.target.value = null; 
+                    }}
                 />
             );
 
