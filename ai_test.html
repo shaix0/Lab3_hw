@@ -65,7 +65,7 @@
                 
                 <div id="actionMenu" class="action-menu-popup hidden">
                     <button class="menu-item"><i class="fa-solid fa-image"></i> 照片圖庫</button>
-                    <button class="menu-item" onclick="goToCamera()"><i class="fa-solid fa-camera"></i> 拍照</button>
+                    <button class="menu-item"><i class="fa-solid fa-camera"></i> 拍照</button>
                     <button class="menu-item"><i class="fa-solid fa-magnifying-glass"></i> 選擇檔案</button>
                 </div>
                 
@@ -78,10 +78,6 @@
         document.getElementById('addButton').addEventListener('click', function() {
             document.getElementById('actionMenu').classList.toggle('hidden');
         });
-        // 點擊「拍照」按鈕 → 跳轉到拍照/上傳頁面
-        function goToCamera() {
-            window.location.href = "camera.html"; // 這裡換成你的拍照/上傳頁面檔案名稱
-        }
     </script>
 </body>
 </html>
