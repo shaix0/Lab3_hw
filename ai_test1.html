@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>營養追蹤儀表板</title>
+    <title>AI營養追蹤儀表板</title>
     <!-- 載入 Tailwind CSS (用於 React 浮層和輔助樣式) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 載入 Font Awesome -->
@@ -307,8 +307,8 @@
 
         authenticate();
 
-        // 全域變數，供 React 存取
-        window.firebaseApp = { db, auth, appId };
+        // **修正：將 Firestore 函式暴露給 React 範圍**
+        window.firebaseApp = { db, auth, appId, collection, addDoc, serverTimestamp };
         // 全域變數，用於儲存當日營養數據
         window.dailyNutritionData = { totalKcal: 0, foodList: [] };
         
@@ -574,7 +574,8 @@
     
     <script type="text/babel">
         const { useState, useEffect, useRef, useCallback } = React;
-        const { db, auth, appId } = window.firebaseApp || {};
+        // **修正：從 window.firebaseApp 結構出所有需要的 Firestore 函式**
+        const { db, auth, appId, collection, addDoc, serverTimestamp } = window.firebaseApp || {};
         
         // API 相關設定
         const apiKey = ""; // Canvas 將在執行時提供 API Key
@@ -876,6 +877,7 @@
                 setError(null);
                 
                 try {
+                    // **修正：現在 collection 和 addDoc 可以在 React 範圍內使用了**
                     const foodLogCollection = collection(db, `/artifacts/${appId}/users/${userId}/foodLog`);
                     
                     // 記錄數據
@@ -886,11 +888,12 @@
                         fullChatLog: JSON.stringify(chat), 
                     });
                     
+                    // 注意：這裡使用 alert() 是為了展示成功，實際應用應替換為模態視窗
                     alert("餐點已成功記錄到您的日誌！"); 
                     resetApp(); 
                 } catch (e) {
                     console.error("記錄餐點失敗:", e);
-                    setError("餐點記錄失敗，請重試。");
+                    setError(`餐點記錄失敗: ${e.message}。`);
                 } finally {
                     setIsLoading(false);
                 }
