@@ -8,6 +8,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 載入 Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- 載入 marked.js 用於 Markdown 渲染 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     
     <!-- 內嵌 CSS 樣式 (模擬 test.css) -->
     <style>
@@ -252,13 +254,33 @@
             background-color: #f3f4f6;
         }
 
+        /* 讓 Markdown 樣式在 React 模態中更好看 */
+        .prose {
+            max-width: 100%;
+        }
+        .prose h1, .prose h2, .prose h3 {
+            font-weight: 700;
+            margin-top: 1em;
+            margin-bottom: 0.5em;
+        }
+        .prose p {
+            margin-top: 0.5em;
+            margin-bottom: 1em;
+            line-height: 1.6;
+        }
+        .prose ul, .prose ol {
+            padding-left: 1.5em;
+            margin-top: 0.5em;
+            margin-bottom: 1em;
+        }
+
     </style>
 
     <!-- 載入 Firebase JS SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, query, onSnapshot, addDoc, serverTimestamp, doc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
         // 設置 Firebase/Firestore
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
@@ -287,6 +309,8 @@
 
         // 全域變數，供 React 存取
         window.firebaseApp = { db, auth, appId };
+        // 全域變數，用於儲存當日營養數據
+        window.dailyNutritionData = { totalKcal: 0, foodList: [] };
         
         // ----------------------------------------------------
         // ⭐ 儀表板動態資料讀取 (Food Log) ⭐
@@ -296,7 +320,6 @@
             const foodLogRef = collection(db, collectionPath);
             
             // 查詢最近記錄的餐點
-            // 注意：避免使用 orderBy() 以避免潛在的索引錯誤，這裡我們將在客戶端排序。
             const q = query(foodLogRef); 
 
             console.log(`正在監聽 Firestore 路徑: ${collectionPath}`);
@@ -313,6 +336,32 @@
                     const timeB = b.timestamp ? b.timestamp.toDate().getTime() : 0;
                     return timeB - timeA;
                 });
+                
+                // ⭐ 新增：計算當日總結數據 ⭐
+                let totalKcal = 0;
+                let foodList = [];
+                
+                logs.forEach(log => {
+                    // 嘗試從 analysis 文本中提取卡路里估計 (e.g., 估計的卡路里：123 kcal)
+                    const kcalMatch = log.analysis ? log.analysis.match(/卡路里：(\d+)\s*kcal/) : null;
+                    const kcal = kcalMatch ? parseInt(kcalMatch[1], 10) : 0;
+                    totalKcal += kcal;
+                    
+                    // 嘗試從 analysis 文本中提取第一個食物名稱作為標題
+                    const foodNameMatch = log.analysis ? log.analysis.match(/識別的食物列表：(.+)/) : null;
+                    const foodName = foodNameMatch ? foodNameMatch[1].split(/[,\n]/)[0].trim() : (log.foodName || '未知餐點');
+                    
+                    // 檢查食物名稱是否已經存在，避免重複顯示
+                    if (foodName && !foodList.find(f => f.name === foodName)) {
+                        foodList.push({ name: foodName, kcal: kcal });
+                    }
+                });
+                
+                // 更新全域變數
+                window.dailyNutritionData = { 
+                    totalKcal: totalKcal, 
+                    foodList: foodList 
+                };
                 
                 // 渲染儀表板
                 renderFoodLogs(logs);
@@ -343,7 +392,7 @@
                 const foodName = foodNameMatch ? foodNameMatch[1].split(/[,\n]/)[0].trim() : (log.foodName || 'AI 分析結果');
                 
                 // 嘗試從 analysis 文本中提取卡路里估計
-                const kcalMatch = log.analysis ? log.analysis.match(/估計的卡路里：(\d+)\s*kcal/) : null;
+                const kcalMatch = log.analysis ? log.analysis.match(/卡路里：(\d+)\s*kcal/) : null;
                 const kcal = kcalMatch ? kcalMatch[1] : '...';
 
                 const timestamp = log.timestamp ? new Date(log.timestamp.toDate()).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' }) : '...';
@@ -356,7 +405,7 @@
                     </div>
                     <div class="info text-right">
                         <p class="font-bold text-lg text-red-600">${kcal} kcal</p>
-                        <p class="text-xs text-gray-400">點擊查看報告</p>
+                        <p class="text-xs text-gray-400">AI 估計</p>
                     </div>
                     <i class="fa-solid fa-file-invoice text-gray-400 ml-4 hover:text-indigo-500 cursor-pointer" onclick="showLogDetails('${log.id}')"></i>
                 `;
@@ -389,7 +438,7 @@
             document.getElementById('actionMenu').classList.toggle('hidden');
         });
         
-        // 導向至 React 模態視窗並設定模式
+        // 導向至 React 模態視窗並設定模式 (File/Camera)
         window.showReactModal = function(mode) {
             document.getElementById('actionMenu').classList.add('hidden'); // 隱藏選單
             const reactRoot = document.getElementById('react-app-root');
@@ -400,9 +449,23 @@
                 window.setExternalTriggerMode(mode);
             }
         }
+        
+        // 導向至 React 模態視窗並設定模式 (Report)
+        window.showReportModal = function() {
+            document.getElementById('actionMenu')?.classList.add('hidden'); 
+            const reactRoot = document.getElementById('react-app-root');
+            reactRoot.classList.remove('hidden');
+
+            if (window.setExternalTriggerMode) {
+                window.setExternalTriggerMode('report');
+            }
+        }
 
         window.closeReactModal = function() {
             document.getElementById('react-app-root').classList.add('hidden');
+            if (window.setExternalTriggerMode) {
+                window.setExternalTriggerMode(null); // 重設模式
+            }
         };
 
         // 假細節頁面
@@ -454,6 +517,14 @@
                     <div class="progress-item"><div class="progress-label">脂肪</div><div class="progress-bar green-bar"></div></div>
                     <div class="progress-item"><div class="progress-label">卡路里</div><div class="progress-bar orange-bar"></div></div>
                 </div>
+                
+                <!-- ⭐ 新增：AI 報告按鈕 ⭐ -->
+                <button 
+                    onclick="showReportModal()" 
+                    class="mt-4 w-full py-2 px-4 bg-indigo-500 text-white rounded-xl font-semibold hover:bg-indigo-600 transition duration-150 shadow-lg text-sm flex items-center justify-center"
+                >
+                    <span class="text-xl mr-2">✨</span> AI 每日報告與建議
+                </button>
             </div>
 
             <!-- 右側卡片：食物日誌 -->
@@ -462,7 +533,7 @@
                 
                 <!-- 靜態示例 -->
                 <div class="food-entry">
-                    <p class="food-name-handwritten">薯條 (範例)</p>
+                    <p class="food-name-handwritten">範例薯條 (靜態)</p>
                     <div class="food-details">
                         <!-- 使用 Placehold.co 圖片 -->
                         <img src="https://placehold.co/80x80/fcd34d/000000?text=Fries" alt="薯條" class="food-image">
@@ -548,6 +619,61 @@
         // 設置一個全域變數，讓外部 JS 可以呼叫
         let setExternalTriggerMode = null;
 
+        /**
+         * ReportPage 組件：顯示 AI 生成的每日營養報告
+         */
+        function ReportPage({ report, isLoading, resetApp, handleGenerateDailyReport }) {
+            // 使用 marked.parse 將 Markdown 轉換為 HTML
+            const reportHtml = report ? marked.parse(report) : null;
+            
+            return (
+                <div className="space-y-6 w-full h-full flex flex-col">
+                    <button 
+                        onClick={resetApp}
+                        className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition"
+                    >
+                        <i className="fas fa-times text-2xl"></i>
+                    </button>
+                    <h2 className="text-2xl font-bold text-indigo-600 border-b pb-2">✨ 每日 AI 營養報告</h2>
+                    
+                    {isLoading && (
+                        <div className="text-center py-10 flex-grow flex flex-col items-center justify-center">
+                            <i className="fas fa-mug-hot fa-spin text-indigo-500 text-4xl mb-3"></i>
+                            <p className="text-gray-600 font-semibold">正在為您生成今天的專屬營養建議...</p>
+                            <p className="text-sm text-gray-400 mt-2">（基於您所有已記錄的餐點數據）</p>
+                        </div>
+                    )}
+
+                    {report && (
+                        <>
+                            <div className="border border-gray-300 bg-white p-5 rounded-xl shadow-inner flex-grow overflow-y-auto">
+                                {/* 使用 dangerouslySetInnerHTML 來渲染由 marked.js 解析的 Markdown 內容 */}
+                                <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: reportHtml }}></div>
+                            </div>
+                            <div className="flex justify-end pt-2">
+                                <button 
+                                    onClick={resetApp}
+                                    className="py-3 px-8 bg-green-600 text-white rounded-xl hover:bg-green-700 transition duration-150 shadow-md font-bold"
+                                >
+                                    <i className="fas fa-thumbs-up mr-2"></i>確認，繼續努力！
+                                </button>
+                            </div>
+                        </>
+                    )}
+                    
+                    {/* Fallback if load fails and not loading */}
+                    {!isLoading && !report && (
+                        <div className="text-center py-10 flex-grow flex flex-col items-center justify-center">
+                            <p className="text-red-500 font-bold text-lg">報告生成失敗，請確定您今天有記錄餐點。</p>
+                            <button onClick={handleGenerateDailyReport} className="mt-4 py-2 px-6 bg-red-500 text-white rounded-lg hover:bg-red-600 transition">
+                                <i className="fas fa-redo mr-2"></i>重試生成
+                            </button>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
         function App() {
             const [page, setPage] = useState("home"); 
             const [imageUrl, setImageUrl] = useState(""); 
@@ -557,14 +683,25 @@
             const [input, setInput] = useState("");
             const [isLoading, setIsLoading] = useState(false); 
             const [error, setError] = useState(null); 
-            const [triggerMode, setTriggerMode] = useState(null); 
+            const [triggerMode, setTriggerMode] = useState(null); // 'file', 'camera', or 'report'
             const [userId, setUserId] = useState(null); 
+            const [dailyReport, setDailyReport] = useState(null); 
 
             const fileInputRef = useRef(null);
             
             // 暴露給外部 HTML 的控制函式，並獲取 userId
             useEffect(() => {
-                window.setExternalTriggerMode = setTriggerMode;
+                window.setExternalTriggerMode = (mode) => {
+                    setTriggerMode(mode);
+                    setDailyReport(null); // 每次切換模式時清空報告
+                    if (mode === 'report') {
+                        setPage("report");
+                    } else if (mode === 'file' || mode === 'camera') {
+                        setPage("home"); // 檔案/相機流程的起點
+                    }
+                };
+                
+                // 獲取 userId
                 const checkUser = setInterval(() => {
                     if (window.firebaseApp?.userId) {
                         setUserId(window.firebaseApp.userId);
@@ -582,17 +719,18 @@
                 setChat([]);
                 setInput("");
                 setError(null);
-                setTriggerMode(null);
-                // 關閉浮層
+                setDailyReport(null);
+                setTriggerMode(null); // 必須重設 triggerMode
                 window.closeReactModal();
             }, []);
 
             // 外部觸發時的邏輯 (例如點擊「拍照」或「選擇檔案」按鈕)
             useEffect(() => {
-                // 只有當 triggerMode 被設定且檔案輸入框存在時才觸發點擊
-                if (triggerMode && fileInputRef.current) {
+                if (triggerMode === 'file' || triggerMode === 'camera') {
                     // 給 HTML 元素一點時間完成初始化
                     setTimeout(() => fileInputRef.current.click(), 100);
+                } else if (triggerMode === 'report') {
+                    handleGenerateDailyReport();
                 }
             }, [triggerMode]);
 
@@ -622,7 +760,9 @@
                 }
             };
 
-            // 呼叫 Gemini API 進行圖像分析
+            // --------------------------------------------------
+            // ⭐ 功能一：圖像分析與對話 (已優化) ⭐
+            // --------------------------------------------------
             const handleAnalyze = async () => {
                 setIsLoading(true);
                 setError(null);
@@ -669,7 +809,6 @@
                 }
             };
             
-            // 呼叫 Gemini API 進行對話
             const handleChat = async () => {
                 if (!input.trim() || isLoading) return;
                 const userMessage = input.trim();
@@ -679,7 +818,6 @@
                 setInput("");
                 setIsLoading(true);
 
-                // 準備 API 內容：重新構造包含圖片和所有歷史消息的內容
                 const finalContents = newChat.map(msg => ({
                     role: msg.role === 'system' ? 'model' : 'user',
                     parts: [{ text: msg.content }]
@@ -748,7 +886,6 @@
                         fullChatLog: JSON.stringify(chat), 
                     });
                     
-                    // 使用 custom modal 替代 alert()
                     alert("餐點已成功記錄到您的日誌！"); 
                     resetApp(); 
                 } catch (e) {
@@ -758,6 +895,61 @@
                     setIsLoading(false);
                 }
             };
+
+            // --------------------------------------------------
+            // ⭐ 功能二：每日報告生成 (新增功能) ⭐
+            // --------------------------------------------------
+            const handleGenerateDailyReport = async () => {
+                setIsLoading(true);
+                setError(null);
+                setDailyReport(null); 
+
+                // 從原生 JS 獲取數據
+                const { totalKcal, foodList } = window.dailyNutritionData || { totalKcal: 0, foodList: [] };
+                
+                if (foodList.length === 0) {
+                    setError("今天尚未記錄任何餐點，無法生成報告。");
+                    setIsLoading(false);
+                    return;
+                }
+                
+                const foodListStr = foodList.map(f => `${f.name} (${f.kcal || '熱量未知'} kcal)`).join('; ');
+                const currentData = `今天記錄的餐點總熱量估計為 ${totalKcal} kcal。餐點清單與熱量估計：${foodListStr}。`;
+
+                const systemPrompt = "你是一位親切且具專業知識的營養顧問。根據用戶今天記錄的餐點數據，提供一份鼓勵性的每日總結報告。報告內容需包括：1. 今天的飲食亮點。2. 建議改善或調整的方面（例如：三大營養素不均衡、纖維不足等）。3. 一個具體的、可實行的明日健康目標。請以繁體中文專業友善的語氣，使用 Markdown 格式（不含標題）回覆。";
+                
+                const userQuery = `請根據以下數據生成報告：${currentData}。`;
+
+                const payload = { 
+                    contents: [{ parts: [{ text: userQuery }] }],
+                    systemInstruction: { parts: [{ text: systemPrompt }] },
+                    // 使用 Google Search 進行額外健康建議的背景知識補充
+                    tools: [{ "google_search": {} }], 
+                };
+                
+                try {
+                    const res = await fetchWithRetry(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const text = res.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                    if (text) {
+                        setDailyReport(text);
+                    } else {
+                        throw new Error("API 回應無效或為空。");
+                    }
+
+                } catch (e) {
+                    console.error("生成報告失敗:", e);
+                    setError("AI 報告生成失敗，請檢查網路連線或 API 狀態。");
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+            // --------------------------------------------------
 
 
             const handleFileChange = (e) => {
@@ -784,18 +976,152 @@
                 />
             );
 
+            let content;
+            
+            if (triggerMode === 'report') {
+                // 報告模式
+                content = <ReportPage 
+                            report={dailyReport} 
+                            isLoading={isLoading} 
+                            resetApp={resetApp} 
+                            handleGenerateDailyReport={handleGenerateDailyReport} 
+                          />;
+            } else if (page === "analyze") {
+                // 分析確認頁面 (File/Camera 流程)
+                content = (
+                    <div className="text-center space-y-6">
+                        <button 
+                            onClick={resetApp}
+                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition"
+                        >
+                            <i className="fas fa-times text-2xl"></i>
+                        </button>
+                        <h2 className="text-2xl font-bold text-gray-800">分析這張照片？</h2>
+                        <img 
+                            src={imageUrl} 
+                            alt="待分析預覽圖" 
+                            className="mx-auto w-full max-w-sm h-auto max-h-72 object-cover rounded-lg shadow-md border-4 border-gray-200"
+                        />
+                        <div className="flex justify-center gap-4 pt-4">
+                            <button 
+                                onClick={resetApp} 
+                                className="py-2 px-4 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition duration-150 shadow-md"
+                            >
+                                <i className="fas fa-arrow-left mr-2"></i>取消並返回
+                            </button>
+                            <button 
+                                onClick={handleAnalyze} 
+                                className="py-2 px-6 bg-indigo-500 text-white rounded-lg font-semibold hover:bg-indigo-600 transition duration-150 shadow-md"
+                            >
+                                確定分析<i className="fas fa-arrow-right ml-2"></i>
+                            </button>
+                        </div>
+                    </div>
+                );
+            } else if (page === "chat") {
+                // 分析結果與對話頁面 (File/Camera 流程)
+                content = (
+                    <div className="space-y-4">
+                        <button 
+                            onClick={resetApp}
+                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition"
+                        >
+                            <i className="fas fa-times text-2xl"></i>
+                        </button>
+                        <h2 className="text-2xl font-bold text-gray-800 border-b pb-2">AI 營養分析結果</h2>
+                        
+                        {/* 對話框 */}
+                        <div className="border border-gray-300 bg-gray-50 h-80 overflow-y-auto p-4 rounded-lg space-y-3">
+                            <img
+                                src={imageUrl}
+                                alt="已分析餐點"
+                                className="w-16 h-16 object-cover rounded-md float-right mb-4 ml-2 border border-gray-300 shadow-md"
+                            />
+                            {chat.map((c, i) => (
+                                <div 
+                                    key={i} 
+                                    className={`p-3 rounded-xl max-w-xs sm:max-w-md ${c.role === 'user' ? 'bg-blue-500 text-white ml-auto text-right' : 'bg-gray-200 mr-auto text-left'}`}
+                                >
+                                    <b className={`capitalize text-xs ${c.role === 'user' ? 'text-blue-200' : 'text-gray-600'}`}>{c.role === 'system' ? 'AI 營養師' : '你'}</b>
+                                    <p className="mt-1 break-words">{c.content}</p>
+                                </div>
+                            ))}
+                        </div>
+                        
+                        {/* 輸入框與按鈕 */}
+                        <div className="flex gap-2">
+                            <input
+                                value={input}
+                                onChange={(e) => setInput(e.target.value)}
+                                onKeyPress={(e) => { if (e.key === 'Enter') handleChat(); }}
+                                placeholder="繼續詢問營養問題..."
+                                className="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                disabled={isLoading}
+                            />
+                            <button 
+                                onClick={handleChat}
+                                className="bg-blue-500 text-white p-3 rounded-lg font-semibold hover:bg-blue-600 transition duration-150"
+                                disabled={isLoading || !input.trim()}
+                            >
+                                送出
+                            </button>
+                        </div>
+                        
+                        {/* 確認並記錄按鈕 */}
+                        <div className="flex justify-between gap-4 mt-6">
+                            <button
+                                onClick={resetApp}
+                                className="w-1/3 py-3 px-4 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition duration-150 shadow-md font-semibold"
+                            >
+                                <i className="fas fa-undo mr-2"></i>取消
+                            </button>
+                            <button 
+                                onClick={handleLogMeal}
+                                className="w-2/3 py-3 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition duration-150 shadow-lg font-bold"
+                                disabled={isLoading || chat.length === 0}
+                            >
+                                <i className="fas fa-check-circle mr-2"></i>確認並記錄餐點
+                            </button>
+                        </div>
+                    </div>
+                );
+            } else {
+                // Home/Wait 頁面 (等待觸發 File/Camera 或 Report)
+                content = (
+                    <div className="text-center space-y-8 py-10">
+                        <button 
+                            onClick={resetApp}
+                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition"
+                        >
+                            <i className="fas fa-times text-2xl"></i>
+                        </button>
+                        <h1 className="text-3xl font-extrabold text-gray-800">食物追蹤儀表板</h1>
+                        {triggerMode === null ? (
+                            <p className="text-gray-500">請從儀表板上的 + 號按鈕或每日報告按鈕選擇操作。</p>
+                        ) : (
+                            <>
+                                <h2 className="text-2xl font-bold text-gray-800">
+                                    {triggerMode === 'camera' ? '啟動相機中...' : '開啟檔案選擇中...'}
+                                </h2>
+                                <i className="fas fa-spinner fa-spin text-indigo-500 text-4xl"></i>
+                                <p className="text-gray-500 mt-4">請在彈出的對話框中選擇圖片或拍照。</p>
+                                <button onClick={resetApp} className="mt-6 text-sm text-gray-500 hover:text-gray-800">取消</button>
+                            </>
+                        )}
+                    </div>
+                );
+            }
+
             return (
-                // Modal Container: 使用 Tailwind 確保 RWD 和美觀
-                <div className="w-full max-w-xl bg-white rounded-xl shadow-2xl p-6 relative">
-                
-                    {isLoading && (
-                        <div className="absolute inset-0 bg-white bg-opacity-80 flex items-center justify-center z-20 rounded-xl">
-                            <div className="flex flex-col items-center">
+                <div className="w-full max-w-xl bg-white rounded-xl shadow-2xl p-6 relative h-auto max-h-[90vh]">
+                    {isLoading && (
+                        <div className="absolute inset-0 bg-white bg-opacity-80 flex items-center justify-center z-20 rounded-xl">
+                            <div className="flex flex-col items-center">
                                 <i className="fas fa-spinner fa-spin text-indigo-500 text-4xl mb-3"></i>
-                                <div className="text-xl font-semibold text-gray-700">載入中...</div>
+                                <div className="text-xl font-semibold text-gray-700">載入中...</div>
                             </div>
                         </div>
-                    )}
+                    )}
                     
                     {error && (
                         <div className="p-3 mb-4 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm" role="alert">
@@ -805,140 +1131,8 @@
                     )}
                     
                     {hiddenFileInput}
-
-
-                    {/* Home/Trigger Wait Page */}
-                    {page === "home" && (
-                        <div className="text-center space-y-8 py-10">
-                            <button 
-                                onClick={resetApp}
-                                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition"
-                            >
-                                <i className="fas fa-times text-2xl"></i>
-                            </button>
-                            {triggerMode === null ? (
-                                <>
-                                    <h1 className="text-3xl font-extrabold text-gray-800">食物追蹤儀表板</h1>
-                                    <p className="text-gray-500">請從儀表板上的 + 號按鈕選擇操作。</p>
-                                </>
-                            ) : (
-                                <>
-                                    <h2 className="text-2xl font-bold text-gray-800">
-                                        {triggerMode === 'camera' ? '啟動相機中...' : '開啟檔案選擇中...'}
-                                    </h2>
-                                    <i className="fas fa-spinner fa-spin text-indigo-500 text-4xl"></i>
-                                    <p className="text-gray-500 mt-4">請在彈出的對話框中選擇圖片或拍照。</p>
-                                    <button 
-                                        onClick={resetApp}
-                                        className="mt-6 text-sm text-gray-500 hover:text-gray-800"
-                                    >
-                                        取消
-                                    </button>
-                                </>
-                            )}
-                        </div>
-                    )}
-
-                    {/* Analyze Page: 確認分析 */}
-                    {page === "analyze" && (
-                        <div className="text-center space-y-6">
-                            <button 
-                                onClick={resetApp}
-                                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition"
-                            >
-                                <i className="fas fa-times text-2xl"></i>
-                            </button>
-                            <h2 className="text-2xl font-bold text-gray-800">分析這張照片？</h2>
-                            <img 
-                                src={imageUrl} 
-                                alt="待分析預覽圖" 
-                                className="mx-auto w-full max-w-sm h-auto max-h-72 object-cover rounded-lg shadow-md border-4 border-gray-200"
-                            />
-                            <div className="flex justify-center gap-4 pt-4">
-                                <button 
-                                    onClick={resetApp} 
-                                    className="py-2 px-4 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition duration-150 shadow-md"
-                                >
-                                    <i className="fas fa-arrow-left mr-2"></i>取消並返回
-                                </button>
-                                <button 
-                                    onClick={handleAnalyze} 
-                                    className="py-2 px-6 bg-indigo-500 text-white rounded-lg font-semibold hover:bg-indigo-600 transition duration-150 shadow-md"
-                                >
-                                    確定分析<i className="fas fa-arrow-right ml-2"></i>
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Chat Page: 營養分析結果與對話 */}
-                    {page === "chat" && (
-                        <div className="space-y-4">
-                            <button 
-                                onClick={resetApp}
-                                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition"
-                            >
-                                <i className="fas fa-times text-2xl"></i>
-                            </button>
-                            <h2 className="text-2xl font-bold text-gray-800 border-b pb-2">AI 營養分析結果</h2>
-                            
-                            {/* 對話框 */}
-                            <div className="border border-gray-300 bg-gray-50 h-80 overflow-y-auto p-4 rounded-lg space-y-3">
-                                <img
-                                    src={imageUrl}
-                                    alt="已分析餐點"
-                                    className="w-16 h-16 object-cover rounded-md float-right mb-4 ml-2 border border-gray-300 shadow-md"
-                                  />
-                                {chat.map((c, i) => (
-                                    <div 
-                                        key={i} 
-                                        className={`p-3 rounded-xl max-w-xs sm:max-w-md ${c.role === 'user' ? 'bg-blue-500 text-white ml-auto text-right' : 'bg-gray-200 mr-auto text-left'}`}
-                                    >
-                                        <b className={`capitalize text-xs ${c.role === 'user' ? 'text-blue-200' : 'text-gray-600'}`}>{c.role === 'system' ? 'AI 營養師' : '你'}</b>
-                                        <p className="mt-1 break-words">{c.content}</p>
-                                    </div>
-                                ))}
-                            </div>
-                            
-                            {/* 輸入框與按鈕 */}
-                            <div className="flex gap-2">
-                                <input
-                                    value={input}
-                                    onChange={(e) => setInput(e.target.value)}
-                                    onKeyPress={(e) => { if (e.key === 'Enter') handleChat(); }}
-                                    placeholder="繼續詢問營養問題..."
-                                    className="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                                    disabled={isLoading}
-                                />
-                                <button 
-                                    onClick={handleChat}
-                                    className="bg-blue-500 text-white p-3 rounded-lg font-semibold hover:bg-blue-600 transition duration-150"
-                                    disabled={isLoading || !input.trim()}
-                                >
-                                    送出
-                                </button>
-                            </div>
-                            
-                            {/* 確認並記錄按鈕 */}
-                            <div className="flex justify-between gap-4 mt-6">
-                                <button
-                                    onClick={resetApp}
-                                    className="w-1/3 py-3 px-4 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition duration-150 shadow-md font-semibold"
-                                >
-                                    <i className="fas fa-undo mr-2"></i>取消
-                                </button>
-                                <button 
-                                    onClick={handleLogMeal}
-                                    className="w-2/3 py-3 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition duration-150 shadow-lg font-bold"
-                                    disabled={isLoading || chat.length === 0}
-                                >
-                                    <i className="fas fa-check-circle mr-2"></i>確認並記錄餐點
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
-                </div>
+                    {content}
+                </div>
             );
         }
 
