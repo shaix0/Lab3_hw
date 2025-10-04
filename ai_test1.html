@@ -1,13 +1,259 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>營養追蹤儀表板</title>
-    <!-- 載入 Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>營養追蹤儀表板</title>
+    <!-- 載入 Tailwind CSS (用於 React 浮層和輔助樣式) -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <!-- 載入 Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <!-- 內嵌 CSS 樣式 (模擬 test.css) -->
+    <style>
+        :root { font-family: 'Inter', sans-serif; }
+        body { margin: 0; padding: 0; background-color: #f0f3f8; }
+
+        /* ------------------------- 導航列樣式 ------------------------- */
+        .top-navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .nav-menu { display: flex; gap: 25px; }
+        .nav-item {
+            color: #6b7280;
+            font-weight: 500;
+            padding: 5px 0;
+            transition: color 0.15s;
+        }
+        .nav-item:hover, .nav-item.active { color: #4f46e5; border-bottom: 3px solid #4f46e5; }
+
+        .profile-pic {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: #4f46e5; /* 假設藍色背景 */
+            background-image: url('https://placehold.co/36x36/4f46e5/ffffff?text=U'); /* 預設圖片 */
+            background-size: cover;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: border 0.2s;
+        }
+        .profile-pic:hover { border: 2px solid #4f46e5; }
+        
+        /* ------------------------- 儀表板主體樣式 ------------------------- */
+        .dashboard {
+            padding: 20px;
+            min-height: calc(100vh - 66px); /* 減去 navbar 高度 */
+        }
+        .full-width-layout { max-width: 100%; }
+        .content-wrapper {
+            max-width: 900px;
+            margin: 0 auto;
+            display: grid;
+            gap: 20px;
+            /* 預設為兩欄佈局，小螢幕下變為單欄 */
+            grid-template-columns: 1fr; 
+        }
+
+        @media (min-width: 768px) {
+            .content-wrapper {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        /* 營養報告卡片 (左側) */
+        .nutrition-report {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .card-header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .date { font-weight: 600; color: #374151; }
+        .calendar-icon { color: #4f46e5; font-size: 18px; }
+
+        /* 圖表區塊 */
+        .chart-section { margin-bottom: 30px; }
+        .donut-chart-container {
+            position: relative;
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 15px;
+        }
+        .donut-chart {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(
+                #ef4444 0% 40%, /* 假設碳水 40% */
+                #3b82f6 40% 75%, /* 假設蛋白質 35% */
+                #10b981 75% 80%, /* 假設脂肪 5% */
+                #e5e7eb 80% 100% /* 剩餘 20% */
+            );
+            box-shadow: 0 0 0 10px #f3f4f6;
+        }
+        .center-hole {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80px;
+            height: 80px;
+            background: white;
+            border-radius: 50%;
+        }
+        .fat-percent {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 14px;
+            font-weight: 600;
+            color: #374151;
+        }
+        .recommendation { font-size: 14px; color: #6b7280; margin-bottom: 10px; }
+        .report-link { font-size: 14px; color: #4f46e5; text-decoration: none; font-weight: 600; }
+        
+        /* 進度條區塊 */
+        .progress-section { width: 100%; }
+        .progress-item { margin-bottom: 10px; }
+        .progress-label { font-size: 12px; font-weight: 500; color: #4b5563; margin-bottom: 4px; }
+        .progress-bar { height: 8px; border-radius: 4px; width: 100%; background-color: #e5e7eb; position: relative; }
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            border-radius: 4px;
+        }
+        .red-bar::after { background-color: #ef4444; width: 60%; } /* 假設 60% 進度 */
+        .blue-bar::after { background-color: #3b82f6; width: 75%; }
+        .green-bar::after { background-color: #10b981; width: 25%; }
+        .orange-bar::after { background-color: #f97316; width: 45%; }
+
+        /* 食物日誌卡片 (右側) */
+        .food-log-card { position: relative; min-height: 400px; }
+        .food-entry { 
+            display: flex; 
+            flex-direction: column;
+            border-bottom: 1px solid #e5e7eb;
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+        }
+        .food-entry:last-child { border-bottom: none; margin-bottom: 0; }
+        
+        .food-name-handwritten {
+            font-size: 18px;
+            font-weight: 700;
+            color: #374151;
+            margin-bottom: 5px;
+        }
+        
+        .food-details {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        .food-image {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+        }
+        .food-details .info p { margin: 0; font-size: 14px; color: #4b5563; }
+        .food-details .info .notes { color: #9ca3af; font-style: italic; }
+
+
+        /* ------------------------- 浮動按鈕與選單 ------------------------- */
+        .add-button { 
+            position: fixed; /* 改為 fixed 確保在視窗中浮動 */
+            bottom: 30px; 
+            right: 30px; 
+            z-index: 20; 
+            width: 56px; 
+            height: 56px; 
+            border-radius: 50%; 
+            background-color: #4f46e5; 
+            color: white; 
+            font-size: 24px; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.5); 
+            transition: transform 0.2s, background-color 0.2s;
+        }
+        .add-button:hover { transform: scale(1.1); background-color: #4338ca; }
+        
+        .action-menu-popup { 
+            position: fixed; /* 改為 fixed */
+            bottom: 100px; 
+            right: 30px; 
+            z-index: 20; 
+            background: white; 
+            border-radius: 12px; 
+            padding: 10px 0; 
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); 
+            min-width: 150px;
+        }
+        .action-menu-popup .menu-item {
+            display: flex; 
+            align-items: center;
+            padding: 10px 15px; 
+            width: 100%; 
+            color: #374151; 
+            font-weight: 500;
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.15s;
+        }
+        .action-menu-popup .menu-item:hover { background-color: #f3f4f6; }
+        .action-menu-popup .menu-item i { margin-right: 10px; color: #4f46e5; }
+        .hidden { display: none !important; }
+        
+        /* RENDERED FOOD LOG ENTRY (for JS/Firestore data) */
+        .food-log-entries-container .food-entry-db {
+            padding: 10px;
+            background-color: #f9fafb;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            border-left: 5px solid #4f46e5;
+        }
+        .food-log-entries-container .food-entry-db:hover {
+            background-color: #f3f4f6;
+        }
+
+    </style>
+
     <!-- 載入 Firebase JS SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -23,7 +269,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
-        // setLogLevel('Debug'); // 可以在開發時開啟調試日誌
 
         // 嘗試登入或匿名登入
         async function authenticate() {
@@ -51,54 +296,67 @@
             const foodLogRef = collection(db, collectionPath);
             
             // 查詢最近記錄的餐點
-            const q = query(foodLogRef, orderBy("timestamp", "desc"));
+            // 注意：避免使用 orderBy() 以避免潛在的索引錯誤，這裡我們將在客戶端排序。
+            const q = query(foodLogRef); 
 
             console.log(`正在監聽 Firestore 路徑: ${collectionPath}`);
 
             return onSnapshot(q, (snapshot) => {
-                const logs = snapshot.docs.map(doc => ({
+                let logs = snapshot.docs.map(doc => ({
                     id: doc.id,
                     ...doc.data()
                 }));
+                
+                // 客戶端排序：根據 timestamp 降序排列 (最新在前)
+                logs.sort((a, b) => {
+                    const timeA = a.timestamp ? a.timestamp.toDate().getTime() : 0;
+                    const timeB = b.timestamp ? b.timestamp.toDate().getTime() : 0;
+                    return timeB - timeA;
+                });
                 
                 // 渲染儀表板
                 renderFoodLogs(logs);
             }, (error) => {
                 console.error("FoodLog 監聽失敗:", error);
-                renderFoodLogs([{
-                    id: 'error',
-                    foodName: '載入失敗',
-                    analysis: '無法連線到資料庫，請檢查網路。',
-                    imageUrl: 'https://placehold.co/80x80/ef4444/ffffff?text=Error'
-                }]);
+                renderFoodLogs([]); // 載入失敗時顯示空
             });
         };
 
         // 渲染函式 (使用原生 JS 更新主頁面)
         function renderFoodLogs(logs) {
-            const container = document.getElementById('food-log-entries');
+            const container = document.getElementById('food-log-entries-dynamic');
             if (!container) return;
 
             container.innerHTML = ''; // 清空現有內容
 
             if (logs.length === 0) {
-                 container.innerHTML = '<p class="text-center text-gray-500 py-4 italic">目前沒有餐點記錄，請點擊右下角 + 拍照記錄。</p>';
+                 container.innerHTML = '<p class="text-center text-gray-500 py-4 italic text-sm">目前沒有餐點記錄，請點擊右下角 + 拍照記錄。</p>';
                  return;
             }
 
             logs.forEach(log => {
                 const div = document.createElement('div');
-                div.className = 'food-entry p-3 bg-white shadow-sm rounded-lg flex items-center mb-2 border-l-4 border-indigo-400';
+                div.className = 'food-entry-db';
                 
                 // 嘗試從 analysis 文本中提取第一個食物名稱作為標題
                 const foodNameMatch = log.analysis ? log.analysis.match(/識別的食物列表：(.+)/) : null;
-                const foodName = foodNameMatch ? foodNameMatch[1].split(/[,\n]/)[0].trim() : (log.foodName || '未知餐點');
+                const foodName = foodNameMatch ? foodNameMatch[1].split(/[,\n]/)[0].trim() : (log.foodName || 'AI 分析結果');
                 
+                // 嘗試從 analysis 文本中提取卡路里估計
+                const kcalMatch = log.analysis ? log.analysis.match(/估計的卡路里：(\d+)\s*kcal/) : null;
+                const kcal = kcalMatch ? kcalMatch[1] : '...';
+
+                const timestamp = log.timestamp ? new Date(log.timestamp.toDate()).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' }) : '...';
+
                 div.innerHTML = `
-                    <img src="${log.imageUrl}" alt="${foodName}" class="food-image w-16 h-16 object-cover rounded-md mr-3 border border-gray-200">
+                    <img src="${log.imageUrl || 'https://placehold.co/80x80/9ca3af/ffffff?text=Meal'}" alt="${foodName}" class="food-image w-16 h-16 object-cover rounded-md mr-3 border border-gray-200">
                     <div class="flex-grow">
                         <p class="font-semibold text-gray-800">${foodName}</p>
-                        <p class="text-sm text-gray-500 truncate">${log.timestamp ? new Date(log.timestamp.toDate()).toLocaleTimeString() : '...'}</p>
+                        <p class="text-xs text-gray-500">${timestamp}</p>
+                    </div>
+                    <div class="info text-right">
+                        <p class="font-bold text-lg text-red-600">${kcal} kcal</p>
+                        <p class="text-xs text-gray-400">點擊查看報告</p>
                     </div>
                     <i class="fa-solid fa-file-invoice text-gray-400 ml-4 hover:text-indigo-500 cursor-pointer" onclick="showLogDetails('${log.id}')"></i>
                 `;
@@ -118,7 +376,6 @@
                 console.log(`使用者已認證: ${userId}.`);
             } else {
                  console.log("使用者未認證。");
-                 // 如果未認證，可以選擇顯示匿名用戶 ID 或只顯示錯誤
                  window.firebaseApp.userId = crypto.randomUUID(); // Fallback
             }
         });
@@ -126,12 +383,15 @@
         // ----------------------------------------------------
         // ⭐ 外部 HTML 控制函式 (與 React 橋接) ⭐
         // ----------------------------------------------------
+        
+        // 隱藏/顯示新增選單 (保留您原有的邏輯)
         document.getElementById('addButton').addEventListener('click', function() {
             document.getElementById('actionMenu').classList.toggle('hidden');
         });
         
-        function showReactModal(mode) {
-            document.getElementById('actionMenu').classList.add('hidden');
+        // 導向至 React 模態視窗並設定模式
+        window.showReactModal = function(mode) {
+            document.getElementById('actionMenu').classList.add('hidden'); // 隱藏選單
             const reactRoot = document.getElementById('react-app-root');
             reactRoot.classList.remove('hidden');
 
@@ -145,92 +405,103 @@
             document.getElementById('react-app-root').classList.add('hidden');
         };
 
-        // 假細節頁面，實際應用中應導航到新頁面或彈窗
+        // 假細節頁面
         window.showLogDetails = function(logId) {
+            // 在這裡可以實現一個更詳細的彈窗或頁面導航
+            console.log(`正在查看 ID 為 ${logId} 的餐點詳細分析報告。`);
             alert(`正在查看 ID 為 ${logId} 的餐點詳細分析報告。`);
         }
 
     </script>
-    
-    <style>
-        :root { font-family: 'Inter', sans-serif; }
-        body { margin: 0; padding: 0; background-color: #f3f4f6; }
-        .dashboard { max-width: 1200px; margin: 0 auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
-        .food-log-card { position: relative; min-height: 400px; background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); padding: 20px; } 
-        .add-button { 
-            position: absolute; bottom: 20px; right: 20px; z-index: 20; 
-            width: 56px; height: 56px; border-radius: 50%; background-color: #4f46e5; color: white; 
-            font-size: 24px; display: flex; justify-content: center; align-items: center; 
-            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.5); transition: transform 0.2s;
-        }
-        .add-button:hover { transform: scale(1.1); background-color: #4338ca; }
-        .action-menu-popup { 
-            position: absolute; bottom: 90px; right: 20px; z-index: 20; 
-            background: white; border-radius: 12px; padding: 10px 0; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); 
-            display: flex; flex-direction: column;
-        }
-        .action-menu-popup .menu-item {
-            padding: 10px 20px; text-align: left; width: 100%; color: #374151; font-weight: 500;
-            display: flex; align-items: center; transition: background-color 0.15s;
-        }
-        .action-menu-popup .menu-item:hover { background-color: #f3f4f6; }
-        .action-menu-popup .menu-item i { margin-right: 10px; color: #4f46e5; }
-        .hidden { display: none !important; }
-        /* 僅供儀表板樣式參考，實際內容由 JS 渲染 */
-        .card { padding: 20px; border-radius: 12px; background: white; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-        .nutrition-report { text-align: center; }
-        .food-entry { border-bottom: 1px solid #eee; }
-        .food-entry:last-child { border-bottom: none; }
-    </style>
 </head>
 <body>
-    
-    <div class="dashboard">
-        <h1 class="text-3xl font-extrabold text-gray-800 border-b pb-3">每日營養儀表板</h1>
-        
-        <!-- 靜態卡片，未來可改為動態數據 -->
-        <div class="card nutrition-report">
-            <h2 class="text-xl font-bold text-gray-700">今日總結 (靜態示例)</h2>
-            <p class="text-sm text-gray-500">2025.09.30</p>
-            <div class="flex justify-center gap-6 mt-4">
-                <div class="bg-red-100 p-3 rounded-xl"><div class="text-lg font-bold text-red-600">1250</div><div class="text-xs text-red-500">卡路里</div></div>
-                <div class="bg-blue-100 p-3 rounded-xl"><div class="text-lg font-bold text-blue-600">80g</div><div class="text-xs text-blue-500">蛋白質</div></div>
-                <div class="bg-green-100 p-3 rounded-xl"><div class="text-lg font-bold text-green-600">150g</div><div class="text-xs text-green-500">碳水</div></div>
-            </div>
-        </div>
+    <!-- 導航列 -->
+    <header class="top-navbar">
+        <div class="nav-menu">
+            <a href="#" class="nav-item active">日誌</a>
+            <a href="#" class="nav-item">趨勢</a>
+            <a href="#" class="nav-item">食譜</a>
+        </div>
 
-        <!-- ⭐ 食物日誌卡片 (由 Firestore 動態渲染) ⭐ -->
-        <div class="card food-log-card">
-            <h2 class="text-xl font-bold text-gray-700 mb-4">我的餐點記錄</h2>
-            <div id="food-log-entries" class="space-y-3 min-h-[100px]">
-                <!-- 這裡會由 JavaScript 載入 Firestore 記錄 -->
-                <p class="text-center text-gray-500 py-4 italic">正在載入餐點記錄...</p>
-            </div>
-            
-            <!-- 新增按鈕及選單 (保持在主 HTML 內) -->
-            <div id="actionMenu" class="action-menu-popup hidden">
-                <button class="menu-item" onclick="showReactModal('camera')"><i class="fa-solid fa-camera"></i> 拍照分析</button>
-                <button class="menu-item" onclick="showReactModal('file')"><i class="fa-solid fa-upload"></i> 上傳圖片分析</button>
-            </div>
-            <button id="addButton" class="add-button"><i class="fa-solid fa-plus"></i></button>
-        </div>
-    </div>
+        <div class="header-right">
+            <a href="#" title="設定"><div class="profile-pic nav-icon"></div></a>
+        </div>
+    </header>
 
-    <!-- ⭐ React 應用程式的浮層掛載點 ⭐ -->
-    <div 
-        id="react-app-root" 
-        class="hidden fixed inset-0 z-50 bg-gray-50/95 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity duration-300"
-    >
-        <!-- React App 將渲染在此處 -->
-    </div>
+    <!-- 儀表板主體 -->
+    <main class="dashboard full-width-layout">
+        <div class="content-wrapper">
+            <!-- 左側卡片：營養總結 -->
+            <div class="card nutrition-report">
+                <div class="card-header">
+                    <span class="date">2025.09.30</span>
+                    <i class="fa-solid fa-calendar-day calendar-icon"></i>
+                </div>
+                
+                <div class="chart-section">
+                    <div class="donut-chart-container">
+                        <div class="donut-chart"><div class="center-hole"></div></div>
+                        <span class="fat-percent">脂肪 5%</span>
+                    </div>
+
+                    <p class="recommendation">成人每日建議營養攝取量</p>
+                    <a href="#" class="report-link">設定健康目標 查看完整報告 →</a>
+                </div>
+
+                <div class="progress-section">
+                    <div class="progress-item"><div class="progress-label">碳水</div><div class="progress-bar red-bar"></div></div>
+                    <div class="progress-item"><div class="progress-label">蛋白質</div><div class="progress-bar blue-bar"></div></div>
+                    <div class="progress-item"><div class="progress-label">脂肪</div><div class="progress-bar green-bar"></div></div>
+                    <div class="progress-item"><div class="progress-label">卡路里</div><div class="progress-bar orange-bar"></div></div>
+                </div>
+            </div>
+
+            <!-- 右側卡片：食物日誌 -->
+            <div class="card food-log-card">
+                <h2 class="food-name-handwritten mb-4 text-xl">我的食物日誌</h2>
+                
+                <!-- 靜態示例 -->
+                <div class="food-entry">
+                    <p class="food-name-handwritten">薯條 (範例)</p>
+                    <div class="food-details">
+                        <!-- 使用 Placehold.co 圖片 -->
+                        <img src="https://placehold.co/80x80/fcd34d/000000?text=Fries" alt="薯條" class="food-image">
+                        <div class="info"><p>450 kcal</p><p class="notes">午餐記錄</p></div>
+                    </div>
+                </div>
+
+                <!-- ⭐ 動態資料載入點 ⭐ -->
+                <div id="food-log-entries-dynamic" class="food-log-entries-container mt-4 pt-4 border-t border-gray-200">
+                    <p class="text-center text-gray-500 py-4 italic text-sm">正在載入餐點記錄...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- 浮動按鈕與選單 -->
+    <div id="actionMenu" class="action-menu-popup hidden">
+        <!-- 照片圖庫 和 選擇檔案 都導向 'file' 模式，拍照導向 'camera' 模式 -->
+        <button class="menu-item" onclick="showReactModal('file')"><i class="fa-solid fa-image"></i> 照片圖庫</button>
+        <button class="menu-item" onclick="showReactModal('camera')"><i class="fa-solid fa-camera"></i> 拍照</button>
+        <button class="menu-item" onclick="showReactModal('file')"><i class="fa-solid fa-upload"></i> 選擇檔案</button>
+    </div>
+    <button id="addButton" class="add-button"><i class="fa-solid fa-plus"></i></button>
+
+    <!-- ⭐ React 應用程式的浮層掛載點 (使用 Tailwind 居中和樣式) ⭐ -->
+    <div 
+        id="react-app-root" 
+        class="hidden fixed inset-0 z-50 bg-gray-50/95 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity duration-300"
+    >
+        <!-- React App 將渲染在此處 -->
+    </div>
 
     <!-- 載入 React 函式庫 -->
     <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
     <!-- 載入 Babel 以支援 JSX 語法 -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
-    <script type="text/babel">
+    
+    <script type="text/babel">
         const { useState, useEffect, useRef, useCallback } = React;
         const { db, auth, appId } = window.firebaseApp || {};
         
@@ -238,16 +509,12 @@
         const apiKey = ""; // Canvas 將在執行時提供 API Key
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
 
-        /**
-         * 輔助函數：將 File 物件轉換為 Base64 字串
-         * ... (保持不變)
-         */
+        // 輔助函數：將 File 物件轉換為 Base64 字串
         const fileToBase64 = (file) => {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.readAsDataURL(file);
                 reader.onload = () => {
-                    // 移除 data:image/mime;base64, 前綴，只需要 Base64 部份
                     resolve(reader.result.split(',')[1]);
                 };
                 reader.onerror = error => reject(error);
@@ -256,6 +523,7 @@
         
         const getMimeType = (file) => file.type || 'image/jpeg';
 
+        // 輔助函數：帶有指數退避的 fetch
         const fetchWithRetry = async (url, options, retries = 3) => {
             for (let i = 0; i < retries; i++) {
                 try {
@@ -277,6 +545,7 @@
         // 核心 AI 營養分析應用程式組件
         // -----------------------------------------------------
 
+        // 設置一個全域變數，讓外部 JS 可以呼叫
         let setExternalTriggerMode = null;
 
         function App() {
@@ -289,14 +558,13 @@
             const [isLoading, setIsLoading] = useState(false); 
             const [error, setError] = useState(null); 
             const [triggerMode, setTriggerMode] = useState(null); 
-            const [userId, setUserId] = useState(null); // 新增 userId 狀態
+            const [userId, setUserId] = useState(null); 
 
             const fileInputRef = useRef(null);
             
-            // 暴露給外部 HTML 的控制函式
+            // 暴露給外部 HTML 的控制函式，並獲取 userId
             useEffect(() => {
-                setExternalTriggerMode = setTriggerMode;
-                // 確保我們有 userId
+                window.setExternalTriggerMode = setTriggerMode;
                 const checkUser = setInterval(() => {
                     if (window.firebaseApp?.userId) {
                         setUserId(window.firebaseApp.userId);
@@ -321,7 +589,9 @@
 
             // 外部觸發時的邏輯 (例如點擊「拍照」或「選擇檔案」按鈕)
             useEffect(() => {
+                // 只有當 triggerMode 被設定且檔案輸入框存在時才觸發點擊
                 if (triggerMode && fileInputRef.current) {
+                    // 給 HTML 元素一點時間完成初始化
                     setTimeout(() => fileInputRef.current.click(), 100);
                 }
             }, [triggerMode]);
@@ -341,7 +611,7 @@
                     
                     setBase64Image(base64);
                     setImageMimeType(getMimeType(fileToUpload));
-                    setPage("analyze");
+                    setPage("analyze"); // 進入分析確認頁面
 
                 } catch (e) {
                     console.error("檔案處理失敗:", e);
@@ -387,7 +657,7 @@
 
                     if (text) {
                         setChat([{ role: "system", content: text }]);
-                        setPage("chat");
+                        setPage("chat"); // 進入對話頁面
                     } else {
                         throw new Error("API 回應無效或為空。");
                     }
@@ -404,21 +674,17 @@
                 if (!input.trim() || isLoading) return;
                 const userMessage = input.trim();
                 
-                // 1. 新增使用者訊息到本地 chat
                 const newChat = [...chat, { role: "user", content: userMessage }];
                 setChat(newChat);
                 setInput("");
                 setIsLoading(true);
 
-                // 2. 準備 API 內容
-                // 圖片只作為第一次發送，後續對話使用歷史紀錄。
-                // 由於 Gemini API 是無狀態的，我們需要重新構造包含圖片和所有歷史消息的內容
+                // 準備 API 內容：重新構造包含圖片和所有歷史消息的內容
                 const finalContents = newChat.map(msg => ({
                     role: msg.role === 'system' ? 'model' : 'user',
                     parts: [{ text: msg.content }]
                 }));
 
-                // 確保圖片和初始提示作為第一個用戶消息的上下文
                 const allContents = [
                     {
                         role: "user",
@@ -432,9 +698,8 @@
                             }
                         ]
                     },
-                    ...finalContents // 加入所有歷史對話，包括新的用戶消息
+                    ...finalContents 
                 ];
-
 
                 const payload = { contents: allContents };
 
@@ -462,7 +727,7 @@
             };
             
             /**
-             * ⭐ 新增功能：確認並記錄餐點到 Firestore ⭐
+             * 確認並記錄餐點到 Firestore
              */
             const handleLogMeal = async () => {
                 if (!userId || !db) {
@@ -475,18 +740,17 @@
                 try {
                     const foodLogCollection = collection(db, `/artifacts/${appId}/users/${userId}/foodLog`);
                     
-                    // 記錄數據：圖片 URL, 完整的 AI 分析文本, 記錄時間
+                    // 記錄數據
                     await addDoc(foodLogCollection, {
                         imageUrl: imageUrl,
                         analysis: chat[0]?.content || "AI 未能提供分析結果。",
-                        // 使用 Firestore 伺服器時間戳，確保時間準確
                         timestamp: serverTimestamp(),
-                        fullChatLog: JSON.stringify(chat), // 記錄完整的聊天紀錄
-                        
+                        fullChatLog: JSON.stringify(chat), 
                     });
                     
-                    alert("餐點已成功記錄到您的日誌！");
-                    resetApp(); // 完成後重置並關閉浮層
+                    // 使用 custom modal 替代 alert()
+                    alert("餐點已成功記錄到您的日誌！"); 
+                    resetApp(); 
                 } catch (e) {
                     console.error("記錄餐點失敗:", e);
                     setError("餐點記錄失敗，請重試。");
@@ -504,175 +768,177 @@
                  }
             };
             
-            const hiddenFileInput = (type) => (
+            const hiddenFileInput = (
+                // 我們只使用一個 file input，根據 triggerMode 來設定 capture 屬性
                 <input 
-                    key={type} 
                     type="file" 
                     ref={fileInputRef} 
-                    id={`${type}-input`}
-                    accept="image/*" 
-                    capture={type === 'camera' ? 'environment' : null} 
+                    id="file-input"
+                    accept="image/*" 
+                    // 根據當前模式決定是否開啟相機
+                    capture={triggerMode === 'camera' ? 'environment' : null} 
                     onChange={handleFileChange}
-                    className="hidden" 
+                    className="hidden" 
+                    // 確保每次都能觸發 change 事件
                     onClick={(e) => { e.target.value = null; }}
                 />
             );
 
             return (
-                <div className="w-full max-w-xl bg-white rounded-xl shadow-2xl p-6 relative">
-            
-                {isLoading && (
-                    <div className="absolute inset-0 bg-white bg-opacity-80 flex items-center justify-center z-20 rounded-xl">
-                        <div className="flex flex-col items-center">
-                            <i className="fas fa-spinner fa-spin text-indigo-500 text-4xl mb-3"></i>
-                            <div className="text-xl font-semibold text-gray-700">載入中...</div>
+                // Modal Container: 使用 Tailwind 確保 RWD 和美觀
+                <div className="w-full max-w-xl bg-white rounded-xl shadow-2xl p-6 relative">
+                
+                    {isLoading && (
+                        <div className="absolute inset-0 bg-white bg-opacity-80 flex items-center justify-center z-20 rounded-xl">
+                            <div className="flex flex-col items-center">
+                                <i className="fas fa-spinner fa-spin text-indigo-500 text-4xl mb-3"></i>
+                                <div className="text-xl font-semibold text-gray-700">載入中...</div>
+                            </div>
                         </div>
-                    </div>
-                )}
-                
-                {error && (
-                    <div className="p-3 mb-4 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm" role="alert">
-                        <i className="fas fa-exclamation-triangle mr-2"></i>{error}
-                        <button onClick={() => setError(null)} className="float-right font-bold ml-4">×</button>
-                    </div>
-                )}
-                
-                {hiddenFileInput('camera')}
-                {hiddenFileInput('file')}
+                    )}
+                    
+                    {error && (
+                        <div className="p-3 mb-4 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm" role="alert">
+                            <i className="fas fa-exclamation-triangle mr-2"></i>{error}
+                            <button onClick={() => setError(null)} className="float-right font-bold ml-4">×</button>
+                        </div>
+                    )}
+                    
+                    {hiddenFileInput}
 
 
-                {/* Home/Trigger Wait Page */}
-                {page === "home" && (
-                    <div className="text-center space-y-8 py-10">
-                        <button 
-                            onClick={resetApp}
-                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition"
-                        >
-                            <i className="fas fa-times text-2xl"></i>
-                        </button>
-                        {triggerMode === null ? (
-                            <>
-                                <h1 className="text-3xl font-extrabold text-gray-800">食物追蹤儀表板</h1>
-                                <p className="text-gray-500">請從儀表板上的 + 號按鈕選擇操作。</p>
-                            </>
-                        ) : (
-                            <>
-                                <h2 className="text-2xl font-bold text-gray-800">
-                                    {triggerMode === 'camera' ? '啟動相機中...' : '開啟檔案選擇中...'}
-                                </h2>
-                                <i className="fas fa-spinner fa-spin text-indigo-500 text-4xl"></i>
-                                <p className="text-gray-500 mt-4">請在彈出的對話框中選擇圖片或拍照。</p>
-                                <button 
-                                    onClick={resetApp}
-                                    className="mt-6 text-sm text-gray-500 hover:text-gray-800"
-                                >
-                                    取消
-                                </button>
-                            </>
-                        )}
-                    </div>
-                )}
-
-                {/* Analyze Page: 確認分析 */}
-                {page === "analyze" && (
-                    <div className="text-center space-y-6">
-                        <button 
-                            onClick={resetApp}
-                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition"
-                        >
-                            <i className="fas fa-times text-2xl"></i>
-                        </button>
-                        <h2 className="text-2xl font-bold text-gray-800">分析這張照片？</h2>
-                        <img 
-                            src={imageUrl} 
-                            alt="待分析預覽圖" 
-                            className="mx-auto w-full max-w-sm h-auto max-h-72 object-cover rounded-lg shadow-md border-4 border-gray-200"
-                        />
-                        <div className="flex justify-center gap-4 pt-4">
-                            <button 
-                                onClick={resetApp} 
-                                className="py-2 px-4 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition duration-150 shadow-md"
-                            >
-                                <i className="fas fa-arrow-left mr-2"></i>取消並返回
-                            </button>
-                            <button 
-                                onClick={handleAnalyze} 
-                                className="py-2 px-6 bg-indigo-500 text-white rounded-lg font-semibold hover:bg-indigo-600 transition duration-150 shadow-md"
-                            >
-                                確定分析<i className="fas fa-arrow-right ml-2"></i>
-                            </button>
-                        </div>
-                    </div>
-                )}
-
-                {/* Chat Page: 營養分析結果與對話 */}
-                {page === "chat" && (
-                    <div className="space-y-4">
-                        <button 
-                            onClick={resetApp}
-                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition"
-                        >
-                            <i className="fas fa-times text-2xl"></i>
-                        </button>
-                        <h2 className="text-2xl font-bold text-gray-800 border-b pb-2">AI 營養分析結果</h2>
-                        
-                        {/* 對話框 */}
-                        <div className="border border-gray-300 bg-gray-50 h-80 overflow-y-auto p-4 rounded-lg space-y-3">
-                            <img
-                              src={imageUrl}
-                              alt="已分析餐點"
-                              className="w-16 h-16 object-cover rounded-md float-right mb-4 ml-2 border border-gray-300 shadow-md"
-                          />
-                            {chat.map((c, i) => (
-                                <div 
-                                    key={i} 
-                                    className={`p-3 rounded-xl max-w-xs sm:max-w-md ${c.role === 'user' ? 'bg-blue-500 text-white ml-auto text-right' : 'bg-gray-200 mr-auto text-left'}`}
-                                >
-                                    <b className={`capitalize text-xs ${c.role === 'user' ? 'text-blue-200' : 'text-gray-600'}`}>{c.role === 'system' ? 'AI 營養師' : '你'}</b>
-                                    <p className="mt-1 break-words">{c.content}</p>
-                                </div>
-                            ))}
-                        </div>
-                        
-                        {/* 輸入框與按鈕 */}
-                        <div className="flex gap-2">
-                            <input
-                                value={input}
-                                onChange={(e) => setInput(e.target.value)}
-                                onKeyPress={(e) => { if (e.key === 'Enter') handleChat(); }}
-                                placeholder="繼續詢問營養問題..."
-                                className="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                                disabled={isLoading}
-                            />
-                            <button 
-                                onClick={handleChat}
-                                className="bg-blue-500 text-white p-3 rounded-lg font-semibold hover:bg-blue-600 transition duration-150"
-                                disabled={isLoading || !input.trim()}
-                            >
-                                送出
-                            </button>
-                        </div>
-                        
-                        {/* ⭐ 核心修正：確認並記錄按鈕 ⭐ */}
-                        <div className="flex justify-between gap-4 mt-6">
-                            <button
+                    {/* Home/Trigger Wait Page */}
+                    {page === "home" && (
+                        <div className="text-center space-y-8 py-10">
+                            <button 
                                 onClick={resetApp}
-                                className="w-1/3 py-3 px-4 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition duration-150 shadow-md font-semibold"
+                                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition"
                             >
-                                <i className="fas fa-undo mr-2"></i>取消
+                                <i className="fas fa-times text-2xl"></i>
                             </button>
-                            <button 
-                                onClick={handleLogMeal}
-                                className="w-2/3 py-3 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition duration-150 shadow-lg font-bold"
-                                disabled={isLoading || chat.length === 0}
-                            >
-                                <i className="fas fa-check-circle mr-2"></i>確認並記錄餐點
-                            </button>
+                            {triggerMode === null ? (
+                                <>
+                                    <h1 className="text-3xl font-extrabold text-gray-800">食物追蹤儀表板</h1>
+                                    <p className="text-gray-500">請從儀表板上的 + 號按鈕選擇操作。</p>
+                                </>
+                            ) : (
+                                <>
+                                    <h2 className="text-2xl font-bold text-gray-800">
+                                        {triggerMode === 'camera' ? '啟動相機中...' : '開啟檔案選擇中...'}
+                                    </h2>
+                                    <i className="fas fa-spinner fa-spin text-indigo-500 text-4xl"></i>
+                                    <p className="text-gray-500 mt-4">請在彈出的對話框中選擇圖片或拍照。</p>
+                                    <button 
+                                        onClick={resetApp}
+                                        className="mt-6 text-sm text-gray-500 hover:text-gray-800"
+                                    >
+                                        取消
+                                    </button>
+                                </>
+                            )}
                         </div>
-                    </div>
-                )}
+                    )}
 
-            </div>
+                    {/* Analyze Page: 確認分析 */}
+                    {page === "analyze" && (
+                        <div className="text-center space-y-6">
+                            <button 
+                                onClick={resetApp}
+                                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition"
+                            >
+                                <i className="fas fa-times text-2xl"></i>
+                            </button>
+                            <h2 className="text-2xl font-bold text-gray-800">分析這張照片？</h2>
+                            <img 
+                                src={imageUrl} 
+                                alt="待分析預覽圖" 
+                                className="mx-auto w-full max-w-sm h-auto max-h-72 object-cover rounded-lg shadow-md border-4 border-gray-200"
+                            />
+                            <div className="flex justify-center gap-4 pt-4">
+                                <button 
+                                    onClick={resetApp} 
+                                    className="py-2 px-4 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition duration-150 shadow-md"
+                                >
+                                    <i className="fas fa-arrow-left mr-2"></i>取消並返回
+                                </button>
+                                <button 
+                                    onClick={handleAnalyze} 
+                                    className="py-2 px-6 bg-indigo-500 text-white rounded-lg font-semibold hover:bg-indigo-600 transition duration-150 shadow-md"
+                                >
+                                    確定分析<i className="fas fa-arrow-right ml-2"></i>
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Chat Page: 營養分析結果與對話 */}
+                    {page === "chat" && (
+                        <div className="space-y-4">
+                            <button 
+                                onClick={resetApp}
+                                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition"
+                            >
+                                <i className="fas fa-times text-2xl"></i>
+                            </button>
+                            <h2 className="text-2xl font-bold text-gray-800 border-b pb-2">AI 營養分析結果</h2>
+                            
+                            {/* 對話框 */}
+                            <div className="border border-gray-300 bg-gray-50 h-80 overflow-y-auto p-4 rounded-lg space-y-3">
+                                <img
+                                    src={imageUrl}
+                                    alt="已分析餐點"
+                                    className="w-16 h-16 object-cover rounded-md float-right mb-4 ml-2 border border-gray-300 shadow-md"
+                                  />
+                                {chat.map((c, i) => (
+                                    <div 
+                                        key={i} 
+                                        className={`p-3 rounded-xl max-w-xs sm:max-w-md ${c.role === 'user' ? 'bg-blue-500 text-white ml-auto text-right' : 'bg-gray-200 mr-auto text-left'}`}
+                                    >
+                                        <b className={`capitalize text-xs ${c.role === 'user' ? 'text-blue-200' : 'text-gray-600'}`}>{c.role === 'system' ? 'AI 營養師' : '你'}</b>
+                                        <p className="mt-1 break-words">{c.content}</p>
+                                    </div>
+                                ))}
+                            </div>
+                            
+                            {/* 輸入框與按鈕 */}
+                            <div className="flex gap-2">
+                                <input
+                                    value={input}
+                                    onChange={(e) => setInput(e.target.value)}
+                                    onKeyPress={(e) => { if (e.key === 'Enter') handleChat(); }}
+                                    placeholder="繼續詢問營養問題..."
+                                    className="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                    disabled={isLoading}
+                                />
+                                <button 
+                                    onClick={handleChat}
+                                    className="bg-blue-500 text-white p-3 rounded-lg font-semibold hover:bg-blue-600 transition duration-150"
+                                    disabled={isLoading || !input.trim()}
+                                >
+                                    送出
+                                </button>
+                            </div>
+                            
+                            {/* 確認並記錄按鈕 */}
+                            <div className="flex justify-between gap-4 mt-6">
+                                <button
+                                    onClick={resetApp}
+                                    className="w-1/3 py-3 px-4 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition duration-150 shadow-md font-semibold"
+                                >
+                                    <i className="fas fa-undo mr-2"></i>取消
+                                </button>
+                                <button 
+                                    onClick={handleLogMeal}
+                                    className="w-2/3 py-3 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition duration-150 shadow-lg font-bold"
+                                    disabled={isLoading || chat.length === 0}
+                                >
+                                    <i className="fas fa-check-circle mr-2"></i>確認並記錄餐點
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                </div>
             );
         }
 
