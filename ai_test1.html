@@ -73,9 +73,9 @@
                         <button class="menu-item"><i class="fa-solid fa-image"></i> 照片圖庫</button> 
                         
                         <!-- 拍照/上傳按鈕現在都呼叫 showReactAnalysisModal() -->
-                        <button class="menu-item" onclick="showReactAnalysisModal()"><i class="fa-solid fa-camera"></i> 拍照</button>
+                        <button class="menu-item" onclick="showReactAnalysisModal('camera')"><i class="fa-solid fa-camera"></i> 拍照</button>
                         
-                        <button class="menu-item" onclick="showReactAnalysisModal()"><i class="fa-solid fa-upload"></i> 選擇檔案</button>
+                        <button class="menu-item" onclick="showReactAnalysisModal('file')"><i class="fa-solid fa-upload"></i> 選擇檔案</button>
                     </div>
                     
                     <button id="addButton" class="add-button"><i class="fa-solid fa-plus"></i></button>
@@ -91,18 +91,226 @@
         class="hidden fixed inset-0 z-50 bg-gray-50/95 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity duration-300"
     >
     </div>
+
+    <!-- 載入 React 函式庫 -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <!-- 載入 Babel 以支援 JSX 語法 -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
-    <script>
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // -----------------------------------------------------
+        // 1. AnalysisModalContent (包含浮層的實際邏輯)
+        // 接收 mode (當前模式) 和 setTriggerMode (供取消時呼叫)
+        // -----------------------------------------------------
+        const AnalysisModalContent = ({ mode, setTriggerMode }) => {
+            // Hooks 必須在這個 function component 內部呼叫
+            const [page, setPage] = useState('home'); // 'home', 'preview', 'analyze', 'done'
+            const [imageFile, setImageFile] = useState(null);
+            const [imagePreviewUrl, setImagePreviewUrl] = useState('');
+            const fileInputRef = useRef(null);
+
+            // 確保每次浮層開啟時，輸入框的模式正確設定
+            useEffect(() => {
+                if (mode && page === 'home' && fileInputRef.current) {
+                    // 'environment' for back camera, null for file selection
+                    fileInputRef.current.accept = "image/*";
+                    fileInputRef.current.capture = mode === 'camera' ? 'environment' : null;
+                    // 自動點擊隱藏的 input，立即啟動相機或檔案選擇器
+                    fileInputRef.current.click();
+                }
+            }, [mode, page]);
+            
+            // 當浮層關閉時，清除狀態
+            useEffect(() => {
+                if (mode === null) {
+                    setPage('home');
+                    setImageFile(null);
+                    setImagePreviewUrl('');
+                }
+            }, [mode]);
+
+            // 處理圖片選擇
+            const handleImageChange = (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    setImageFile(file);
+                    setImagePreviewUrl(URL.createObjectURL(file));
+                    setPage('preview');
+                } else {
+                    // 如果用戶取消了拍照/選擇，則關閉浮層
+                    handleCancel();
+                }
+            };
+
+            // 模擬分析流程，然後關閉浮層
+            const handleAnalyze = () => {
+                setPage('analyze');
+                
+                // 模擬網路延遲
+                setTimeout(() => {
+                    setPage('done');
+                }, 2000);
+            };
+
+            // 重新選擇/取消 / 完成
+            const handleCancel = () => {
+                // 使用傳遞進來的 setTriggerMode prop
+                setTriggerMode(null); // 清除內部狀態，讓 React 組件重設
+                window.closeReactAnalysisModal(); // 呼叫父 HTML 的關閉函式 (它會隱藏浮層)
+            };
+            
+            const handleRedo = () => {
+                setPage('home');
+                setImageFile(null);
+                setImagePreviewUrl('');
+                // 重新觸發檔案選擇流程 (利用 useEffect 的依賴)
+                setTriggerMode(mode); 
+            };
+
+
+            // 隱藏的檔案輸入框，用於觸發相機或檔案選擇
+            const hiddenFileInput = (
+                <input 
+                    key={mode} // key 改變會強制重新渲染，確保 capture 屬性被正確更新
+                    type="file" 
+                    ref={fileInputRef} 
+                    onChange={handleImageChange} 
+                    className="hidden" 
+                    // capture 屬性將由 useEffect 根據 mode 設定
+                />
+            );
+
+
+            // 1. Home / 選擇輸入中 (實際上只會短暫出現，因為會立即觸發相機/檔案選擇)
+            if (page === 'home') {
+                return (
+                    <div className="bg-white rounded-xl shadow-2xl p-6 max-w-lg w-full text-center">
+                        <h2 className="text-3xl font-bold mb-4 text-gray-800">準備啟動...</h2>
+                        <i className="fas fa-spinner fa-spin text-indigo-500 text-4xl"></i>
+                        {hiddenFileInput}
+                        <button 
+                            className="mt-6 text-sm text-gray-500 hover:text-gray-800"
+                            onClick={handleCancel}
+                        >
+                            取消
+                        </button>
+                    </div>
+                );
+            }
+
+            // 2. Preview / 圖片確認頁
+            if (page === 'preview') {
+                return (
+                    <div className="bg-white rounded-xl shadow-2xl p-6 max-w-lg w-full">
+                        <h2 className="text-2xl font-bold mb-4 text-gray-800 text-center">確認您的餐點圖片</h2>
+                        {imagePreviewUrl && (
+                            <img 
+                                src={imagePreviewUrl} 
+                                alt="Preview" 
+                                className="w-full h-auto max-h-80 object-cover rounded-lg mb-6 border border-gray-200"
+                            />
+                        )}
+                        <div className="flex justify-between space-x-4">
+                            <button 
+                                className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-3 rounded-lg transition duration-200"
+                                onClick={handleRedo}
+                            >
+                                <i className="fas fa-redo mr-2"></i> 重新拍攝/選擇
+                            </button>
+                            <button 
+                                className="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-3 rounded-lg transition duration-200"
+                                onClick={handleAnalyze}
+                            >
+                                開始 AI 分析 <i className="fas fa-arrow-right ml-2"></i>
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+            
+            // 3. Analyze / 分析中
+            if (page === 'analyze') {
+                 return (
+                    <div className="bg-white rounded-xl shadow-2xl p-8 max-w-xs w-full text-center">
+                        <i className="fas fa-cog fa-spin text-indigo-500 text-4xl mb-4"></i>
+                        <h2 className="text-xl font-bold text-gray-800">AI 正在分析中...</h2>
+                        <p className="text-gray-500 text-sm mt-2">請稍候，正在識別食物及計算營養素。</p>
+                    </div>
+                );
+            }
+            
+            // 4. Done / 分析完成
+            if (page === 'done') {
+                 return (
+                    <div className="bg-white rounded-xl shadow-2xl p-8 max-w-xs w-full text-center">
+                        <i className="fas fa-check-circle text-green-500 text-4xl mb-4"></i>
+                        <h2 className="text-xl font-bold text-gray-800">分析完成！</h2>
+                        <p className="text-gray-500 text-sm mt-2 mb-6">您的餐點已成功記錄。即將返回儀表板。</p>
+                        <button 
+                            className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
+                            onClick={handleCancel}
+                        >
+                            確認
+                        </button>
+                    </div>
+                );
+            }
+        };
+
+        // -----------------------------------------------------
+        // 2. App (Root Component - 處理狀態並橋接外部 JS)
+        // -----------------------------------------------------
+        const App = () => {
+             // ⭐ FIX: Hooks 必須在這個 function component 內部呼叫 ⭐
+            const [triggerMode, setTriggerMode] = useState(null); 
+
+            // 在組件第一次渲染後，將 setTriggerMode 暴露給全域 window 物件
+            useEffect(() => {
+                console.log("React App initialized. Exposing setTriggerMode.");
+                window.setTriggerMode = setTriggerMode;
+            }, []); // 空依賴陣列確保只執行一次
+
+            // 渲染實際內容組件，並傳遞 mode 和 setter
+            return <AnalysisModalContent mode={triggerMode} setTriggerMode={setTriggerMode} />;
+        };
+
+
+        // React 渲染邏輯
+        const container = document.getElementById('react-app-root');
+        // 確保 DOM 容器存在
+        if (container) {
+            const root = ReactDOM.createRoot(container);
+            
+            // 渲染 App 組件
+            root.render(<App />);
+        } else {
+            console.error("React root container not found!");
+        }
+
+    </script>
+
+    <!-- 儀表板控制邏輯 -->
+    <script>
         // 1. 浮動菜單的開關邏輯
         document.getElementById('addButton').addEventListener('click', function() {
             document.getElementById('actionMenu').classList.toggle('hidden');
         });
 
-        // 2. 啟動 React 分析模組的邏輯 (取代跳轉到 camera.html)
-        function showReactAnalysisModal() {
+        // 2. 啟動 React 分析模組的邏輯 (增加 mode 參數)
+        function showReactAnalysisModal(mode) {
             // 隱藏浮動菜單
             document.getElementById('actionMenu').classList.add('hidden');
             
+            // 現在直接呼叫 window 上的 setTriggerMode，它已由 React 的 Root Component 定義
+            if (window.setTriggerMode) {
+                window.setTriggerMode(mode);
+            } else {
+                console.error("setTriggerMode is not yet available on window.");
+            }
+
             // 顯示 React 掛載點 (全螢幕浮層)
             const reactRoot = document.getElementById('react-app-root');
             reactRoot.classList.remove('hidden');
@@ -111,11 +319,12 @@
         // 3. 關閉 React 模組的範例函式 (App.jsx 應該在分析流程結束或取消時呼叫此函式)
         window.closeReactAnalysisModal = function() {
             document.getElementById('react-app-root').classList.add('hidden');
+            
+            // 清除 setTriggerMode 狀態
+            if (window.setTriggerMode) {
+                window.setTriggerMode(null); 
+            }
         };
-
-        // 4. (重要) 如果您需要讓 App.jsx 渲染，請確保在您的 React 專案中，
-        // 您已經將 App.jsx 掛載到 document.getElementById('react-app-root')。
-        // 在這裡，我們假設該步驟在您的編譯流程中處理。
-    </script>
+    </script>
 </body>
 </html>
