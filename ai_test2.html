@@ -198,6 +198,19 @@
         analyzeButton.addEventListener('click', async () => {
             if (!base64Image) return;
 
+            // 新增 API Key 檢查：如果金鑰仍為空字串，發出警告
+            if (apiKey === "") {
+                showMessage(
+                    "API 金鑰遺失", 
+                    "AI 分析功能需要有效的 API 金鑰。請確認您的環境已正確提供金鑰。", 
+                    true
+                );
+                // 恢復按鈕狀態
+                analyzeButton.disabled = base64Image === null; 
+                loadingIndicator.classList.add('hidden');
+                return;
+            }
+
             analysisResult.innerHTML = `<div class="text-center py-8"><svg class="animate-spin h-8 w-8 text-teal-500 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><p class="mt-2 text-teal-500">AI 正在分析餐點中...</p></div>`;
             analyzeButton.disabled = true;
             loadingIndicator.classList.remove('hidden');
@@ -228,10 +241,10 @@
                             properties: {
                                 "dish_name": { "type": "STRING" },
                                 "calories": { "type": "NUMBER" },
-                                "protein_g": { "type": "NUMBER" },
-                                "fat_g": { "type": "NUMBER" },
-                                "carbs_g": { "type": "NUMBER" },
-                                "analysis_summary": { "type": "STRING" }
+                            "protein_g": { "type": "NUMBER" },
+                            "fat_g": { "type": "NUMBER" },
+                            "carbs_g": { "type": "NUMBER" },
+                            "analysis_summary": { "type": "STRING" }
                             },
                             required: ["dish_name", "calories", "protein_g", "fat_g", "carbs_g", "analysis_summary"]
                         }
@@ -255,8 +268,11 @@
                         });
 
                         if (!response.ok) {
-                            if (response.status === 429) {
-                                throw new Error('API Rate Limit Exceeded');
+                            // 針對 API 權限和頻率的錯誤進行明確處理
+                            if (response.status === 403) {
+                                throw new Error('403 Forbidden: API 金鑰無效或存取權限不足。');
+                            } else if (response.status === 429) {
+                                throw new Error('API Rate Limit Exceeded: 請求過於頻繁。');
                             }
                             throw new Error(`HTTP error! status: ${response.status}`);
                         }
@@ -291,7 +307,13 @@
             } catch (error) {
                 console.error("AI 分析失敗:", error);
                 analysisResult.innerHTML = `<p class="text-red-500 font-medium">分析失敗，請檢查圖片或重試: ${error.message}</p>`;
-                showMessage("分析錯誤", `無法完成 AI 分析。請確保圖片清晰並重試。錯誤: ${error.message}`, true);
+                
+                // 顯示更詳細的錯誤訊息給使用者
+                const errorMessage = error.message.includes('403 Forbidden') 
+                    ? `無法完成 AI 分析。請確認您的 API 金鑰有效且具有足夠的權限。錯誤: ${error.message}`
+                    : `無法完成 AI 分析。請確保圖片清晰並重試。錯誤: ${error.message}`;
+
+                showMessage("分析錯誤", errorMessage, true);
                 
             } finally {
                 analyzeButton.disabled = base64Image === null; 
