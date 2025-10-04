@@ -433,10 +433,22 @@
         // ⭐ 外部 HTML 控制函式 (與 React 橋接) ⭐
         // ----------------------------------------------------
         
-        // 隱藏/顯示新增選單 (保留您原有的邏輯)
+        // 隱藏/顯示新增選單 (優化: 確保點擊事件能觸發並記錄)
         document.getElementById('addButton').addEventListener('click', function() {
-            document.getElementById('actionMenu').classList.toggle('hidden');
-        });
+            const actionMenu = document.getElementById('actionMenu');
+            // 檢查 actionMenu 是否存在
+            if (actionMenu) {
+                actionMenu.classList.toggle('hidden');
+                // 記錄到 Console，以便用戶確認事件是否觸發
+                if (actionMenu.classList.contains('hidden')) {
+                    console.log('點擊 + 號: 隱藏選單');
+                } else {
+                    console.log('點擊 + 號: 顯示選單');
+                }
+            } else {
+                console.error('錯誤: 找不到 actionMenu 元素。');
+            }
+        });
         
         // 導向至 React 模態視窗並設定模式 (File/Camera)
         window.showReactModal = function(mode) {
