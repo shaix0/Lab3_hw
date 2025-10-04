@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 營養追蹤儀表板</title>
+    <title>AI 營養分析儀表板 (單機版)</title>
     <!-- 載入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -11,7 +11,7 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #e5e7eb; /* 淺灰背景 */
+            background-color: #f3f4f6; /* 淺灰背景 */
             min-height: 100vh;
             display: flex;
             align-items: flex-start;
@@ -29,44 +29,39 @@
             flex-direction: column;
             gap: 2rem;
         }
-        .meal-card {
-            border: 1px solid #e5e7eb;
-            transition: all 0.2s;
-        }
-        .meal-card:hover {
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-            transform: translateY(-1px);
+        /* 移除歷史紀錄的視覺樣式，因為此版本不儲存歷史 */
+        #historyList {
+            min-height: 5rem;
         }
     </style>
 </head>
 <body>
     <div id="app">
-        <h1 class="text-4xl font-extrabold text-indigo-600 text-center">AI 營養追蹤儀表板</h1>
+        <h1 class="text-4xl font-extrabold text-teal-600 text-center">AI 營養分析儀表板 (單機版)</h1>
         
-        <!-- 狀態資訊 (精簡版) -->
+        <!-- 狀態資訊 (精簡版 - 已移除 Firebase 相關狀態) -->
         <div class="flex justify-between items-center text-sm text-gray-500 border-b pb-3">
-            <span id="connectionStatus" class="font-medium">初始化中...</span>
-            <span class="truncate">用戶 ID: <code id="userIdDisplay" class="ml-1 text-xs">...</code></span>
+            <span id="connectionStatus" class="font-medium text-green-600">應用程式已啟動 (無資料庫)</span>
         </div>
 
         <div class="grid md:grid-cols-2 gap-6">
-            <!-- 左側：圖片上傳 (步驟 1 & 2) -->
+            <!-- 左側：圖片上傳與分析 (步驟 1 & 2) -->
             <div>
-                <h2 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">1. 上傳餐點照片</h2>
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">1. 上傳餐點照片並分析</h2>
 
-                <!-- 檔案輸入 (模擬拍照頁面) -->
+                <!-- 檔案輸入 -->
                 <label class="block mb-4">
                     <span class="sr-only">選擇照片</span>
                     <input type="file" id="fileInput" accept="image/*" class="block w-full text-sm text-gray-500
                         file:mr-4 file:py-2 file:px-4
                         file:rounded-full file:border-0
                         file:text-sm file:font-semibold
-                        file:bg-indigo-50 file:text-indigo-700
-                        hover:file:bg-indigo-100 cursor-pointer
+                        file:bg-teal-50 file:text-teal-700
+                        hover:file:bg-teal-100 cursor-pointer
                     "/>
                 </label>
 
-                <!-- 圖片預覽與分析按鈕 -->
+                <!-- 圖片預覽 -->
                 <div class="relative bg-gray-100 rounded-lg overflow-hidden h-64 flex items-center justify-center mb-4">
                     <img id="imagePreview" src="" alt="餐點預覽" class="hidden max-h-full max-w-full object-cover">
                     <p id="placeholderText" class="text-gray-400">上傳餐點圖片以開始分析</p>
@@ -76,7 +71,7 @@
                     id="analyzeButton" 
                     disabled
                     class="w-full py-3 px-4 text-white font-bold rounded-xl shadow-lg transition duration-200 
-                    bg-green-500 hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center"
+                    bg-teal-500 hover:bg-teal-600 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center"
                 >
                     <svg id="loadingIndicator" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -86,57 +81,43 @@
                 </button>
             </div>
 
-            <!-- 右側：分析結果與儲存 (步驟 3) -->
+            <!-- 右側：分析結果 -->
             <div>
                 <h2 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">2. 分析結果</h2>
                 
-                <div id="analysisResult" class="bg-indigo-50 p-4 rounded-xl shadow-inner min-h-[16rem]">
+                <div id="analysisResult" class="bg-teal-50 p-4 rounded-xl shadow-inner min-h-[16rem]">
                     <p class="text-gray-500 italic">分析結果將顯示在這裡...</p>
                 </div>
 
-                <!-- 確認儲存按鈕 (只有在分析完成後才顯示) -->
-                <button 
-                    id="saveButton" 
-                    disabled
-                    class="mt-4 w-full py-3 px-4 text-white font-bold rounded-xl shadow-lg transition duration-200 
-                    bg-indigo-500 hover:bg-indigo-600 disabled:bg-gray-400 disabled:cursor-not-allowed hidden"
-                >
-                    ✅ 確定結果並儲存紀錄
-                </button>
+                <!-- 儲存按鈕已移除，因為無資料庫 -->
+                <div class="mt-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
+                    ⚠️ 提示：此為單機分析模式，結果不會被永久儲存。
+                </div>
             </div>
         </div>
 
-        <!-- 歷史記錄 (步驟 4) -->
+        <!-- 歷史記錄 (現在只用於顯示當前分析結果) -->
         <div class="mt-4">
-            <h2 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">3. 歷史紀錄 (Firestore)</h2>
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">3. 最近一次分析</h2>
             <div id="historyList" class="space-y-4">
-                <p class="text-gray-500 text-center italic">載入歷史餐點中...</p>
+                <p class="text-gray-500 text-center italic">尚無分析紀錄</p>
             </div>
         </div>
 
-        <!-- 訊息彈出視窗 (代替 alert()) -->
+        <!-- 訊息彈出視窗 -->
         <div id="messageBox" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
             <div class="bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full">
-                <h3 class="text-xl font-bold text-red-600 mb-3">錯誤通知</h3>
-                <p id="messageContent" class="text-gray-700 mb-4">這是一個錯誤訊息。</p>
-                <button onclick="document.getElementById('messageBox').classList.add('hidden')" class="w-full py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">確定</button>
+                <h3 id="messageTitle" class="text-xl font-bold text-red-600 mb-3">通知</h3>
+                <p id="messageContent" class="text-gray-700 mb-4">訊息內容</p>
+                <button onclick="document.getElementById('messageBox').classList.add('hidden')" class="w-full py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600">確定</button>
             </div>
         </div>
     </div>
 
     <script type="module">
-        // Firebase SDK 導入
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        // 修正：從 firebase-firestore.js 導入 setLogLevel
-        import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // 設置 Firebase 日誌級別為 Debug
-        setLogLevel('Debug');
+        // 由於 Firebase 配置問題，此版本將專注於 AI 分析功能，移除所有 Firestore 相關代碼。
 
         // --- DOM 元素 ---
-        const connectionStatus = document.getElementById('connectionStatus');
-        const userIdDisplay = document.getElementById('userIdDisplay');
         const fileInput = document.getElementById('fileInput');
         const imagePreview = document.getElementById('imagePreview');
         const placeholderText = document.getElementById('placeholderText');
@@ -144,89 +125,30 @@
         const loadingIndicator = document.getElementById('loadingIndicator');
         const analysisResult = document.getElementById('analysisResult');
         const historyList = document.getElementById('historyList');
-        const saveButton = document.getElementById('saveButton'); // 新增儲存按鈕
         const messageBox = document.getElementById('messageBox');
+        const messageTitle = document.getElementById('messageTitle');
         const messageContent = document.getElementById('messageContent');
 
         // --- 全域變數 ---
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
         const apiKey = ""; // Gemini API Key (由 Canvas 環境提供)
-
-        let app, db, auth;
-        let currentUserId = null;
         let base64Image = null; // 儲存當前 Base64 圖片數據
-        let currentMealData = null; // 儲存當前 AI 分析的結果
 
         // --- 輔助函數：替代 alert() ---
         function showMessage(title, message, isError = true) {
-            document.querySelector('#messageBox h3').textContent = title;
+            messageTitle.textContent = title;
             messageContent.textContent = message;
-            document.querySelector('#messageBox h3').classList.toggle('text-red-600', isError);
+            
+            // 動態調整顏色
+            messageTitle.classList.toggle('text-red-600', isError);
+            messageTitle.classList.toggle('text-teal-600', !isError);
             document.querySelector('#messageBox button').classList.toggle('bg-red-500', isError);
-            document.querySelector('#messageBox button').classList.toggle('bg-indigo-500', !isError);
+            document.querySelector('#messageBox button').classList.toggle('bg-teal-500', !isError);
+
             messageBox.classList.remove('hidden');
             messageBox.classList.add('flex');
         }
 
-        // --- I. Firebase 初始化與認證 ---
-        async function initializeFirebase() {
-            if (!firebaseConfig) {
-                showMessage("配置錯誤", "Firebase 配置訊息遺失，無法啟動資料庫。", true);
-                return;
-            }
-
-            try {
-                app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-
-                connectionStatus.textContent = "資料庫連線成功";
-                connectionStatus.classList.add('text-green-600');
-
-                await setPersistence(auth, browserSessionPersistence);
-                await authenticateUser();
-
-            } catch (error) {
-                console.error("Firebase 初始化失敗:", error);
-                connectionStatus.textContent = "連線失敗";
-                connectionStatus.classList.add('text-red-600');
-                showMessage("連線錯誤", `初始化時發生錯誤: ${error.message}`, true);
-            }
-        }
-
-        async function authenticateUser() {
-            try {
-                const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-                
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
-
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        currentUserId = user.uid;
-                        userIdDisplay.textContent = currentUserId;
-                        console.log("用戶已登入，UID:", currentUserId);
-                        
-                        // 認證成功後，載入歷史記錄
-                        loadHistory(currentUserId);
-
-                    } else {
-                        currentUserId = null;
-                        userIdDisplay.textContent = "未登入...";
-                        showMessage("身份驗證失敗", "無法取得用戶 ID，請重新整理。", true);
-                    }
-                });
-            } catch (error) {
-                console.error("身份驗證失敗:", error);
-                showMessage("認證錯誤", `身份驗證時發生錯誤: ${error.message}`, true);
-            }
-        }
-
-        // --- II. 圖像處理與 AI 分析 ---
+        // --- I. 圖像處理與 AI 分析 ---
 
         // 將圖片檔案轉換為 Base64 格式
         function fileToBase64(file) {
@@ -234,7 +156,7 @@
                 const reader = new FileReader();
                 reader.readAsDataURL(file);
                 reader.onload = () => {
-                    // 提取 Base64 數據部分 (e.g., "data:image/jpeg;base64,..." -> "...")
+                    // 提取 Base64 數據部分
                     const base64Data = reader.result.split(',')[1];
                     resolve(base64Data);
                 };
@@ -242,14 +164,13 @@
             });
         }
 
-        // 監聽檔案輸入 (步驟 1: 拍照/上傳)
+        // 監聽檔案輸入
         fileInput.addEventListener('change', async (event) => {
             const file = event.target.files[0];
             
-            // 清除之前的結果和狀態
-            currentMealData = null;
+            // 清除之前的結果
             analysisResult.innerHTML = `<p class="text-gray-500 italic">分析結果將顯示在這裡...</p>`;
-            saveButton.classList.add('hidden');
+            historyList.innerHTML = `<p class="text-gray-500 text-center italic">尚無分析紀錄</p>`;
 
             if (file) {
                 imagePreview.src = URL.createObjectURL(file);
@@ -273,16 +194,16 @@
             }
         });
 
-        // 呼叫 Gemini API 進行分析 (步驟 2: 確認並分析)
+        // 呼叫 Gemini API 進行分析
         analyzeButton.addEventListener('click', async () => {
-            if (!base64Image || !currentUserId) return;
+            if (!base64Image) return;
 
-            analysisResult.innerHTML = `<div class="text-center py-8"><svg class="animate-spin h-8 w-8 text-indigo-500 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><p class="mt-2 text-indigo-500">AI 正在分析餐點中...</p></div>`;
+            analysisResult.innerHTML = `<div class="text-center py-8"><svg class="animate-spin h-8 w-8 text-teal-500 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><p class="mt-2 text-teal-500">AI 正在分析餐點中...</p></div>`;
             analyzeButton.disabled = true;
             loadingIndicator.classList.remove('hidden');
-            saveButton.classList.add('hidden'); // 分析中隱藏儲存按鈕
 
             try {
+                // 提示詞要求 AI 輸出指定格式的 JSON，並要求分析摘要為繁體中文
                 const prompt = "Please analyze this meal image. Identify the main dish(es) and estimate the nutritional content (Calories, Protein, Fat, Carbs) in grams. Provide the result ONLY as a JSON object that adheres to the following structure. The analysis_summary should be a concise description of the nutritional value in Traditional Chinese.\n\nStructure:\n{\n  \"dish_name\": \"string\",\n  \"calories\": \"number\",\n  \"protein_g\": \"number\",\n  \"fat_g\": \"number\",\n  \"carbs_g\": \"number\",\n  \"analysis_summary\": \"string\"\n}";
 
                 const payload = {
@@ -293,7 +214,7 @@
                                 { text: prompt },
                                 {
                                     inlineData: {
-                                        mimeType: "image/jpeg", // 假設上傳的都是 JPEG，實際應根據 file.type
+                                        mimeType: "image/jpeg", // 假設 MIME 類型為 jpeg
                                         data: base64Image
                                     }
                                 }
@@ -309,8 +230,8 @@
                                 "calories": { "type": "NUMBER" },
                                 "protein_g": { "type": "NUMBER" },
                                 "fat_g": { "type": "NUMBER" },
-                                "carbs_g": { "type": "NUMBER" }, // 修正: 確保在 properties 中定義
-                                "analysis_summary": { "type": "STRING" } // 修正: 確保在 properties 中定義
+                                "carbs_g": { "type": "NUMBER" },
+                                "analysis_summary": { "type": "STRING" }
                             },
                             required: ["dish_name", "calories", "protein_g", "fat_g", "carbs_g", "analysis_summary"]
                         }
@@ -361,34 +282,28 @@
                     }
                 }
                 
-                currentMealData = JSON.parse(jsonText.trim()); // trim to clean up potential whitespace
+                const mealData = JSON.parse(jsonText.trim()); 
                 
-                // 顯示結果並準備儲存
-                renderAnalysisResult(currentMealData);
-                saveButton.disabled = false; // 啟用儲存按鈕
-                saveButton.classList.remove('hidden'); // 顯示儲存按鈕
+                // 顯示結果到兩個區域
+                renderAnalysisResult(mealData);
+                renderHistory([mealData]); // 僅顯示當前結果為「歷史」
 
             } catch (error) {
                 console.error("AI 分析失敗:", error);
-                // 失敗時，保持上傳狀態，只清除分析結果區域，讓使用者可以重試
                 analysisResult.innerHTML = `<p class="text-red-500 font-medium">分析失敗，請檢查圖片或重試: ${error.message}</p>`;
-                showMessage("分析錯誤", `無法完成 AI 分析: ${error.message}`, true);
-                
-                // 確保儲存按鈕被隱藏且禁用
-                saveButton.disabled = true;
-                saveButton.classList.add('hidden');
+                showMessage("分析錯誤", `無法完成 AI 分析。請確保圖片清晰並重試。錯誤: ${error.message}`, true);
                 
             } finally {
-                analyzeButton.disabled = base64Image === null; // 確保有圖片才能再次分析
+                analyzeButton.disabled = base64Image === null; 
                 loadingIndicator.classList.add('hidden');
             }
         });
 
-        // 渲染分析結果到 UI
+        // 渲染分析結果到 UI (分析結果區塊)
         function renderAnalysisResult(data) {
             analysisResult.innerHTML = `
                 <div class="space-y-3">
-                    <h3 class="text-2xl font-bold text-indigo-700">${data.dish_name || '未識別餐點'}</h3>
+                    <h3 class="text-2xl font-bold text-teal-700">${data.dish_name || '未識別餐點'}</h3>
                     <div class="grid grid-cols-2 gap-2 text-sm font-medium">
                         <p class="bg-white p-2 rounded-lg shadow-sm">卡路里: <span class="text-red-500">${Math.round(data.calories || 0)} kcal</span></p>
                         <p class="bg-white p-2 rounded-lg shadow-sm">蛋白質: <span class="text-blue-500">${(data.protein_g || 0).toFixed(1)} g</span></p>
@@ -403,113 +318,21 @@
             `;
         }
 
-        // --- III. 狀態管理與儲存 ---
-        
-        // 重設應用程式到初始狀態 (準備上傳新的圖片)
-        function resetAppStateForNewUpload() {
-            currentMealData = null;
-            base64Image = null;
-            fileInput.value = '';
-            imagePreview.src = '';
-            imagePreview.classList.add('hidden');
-            placeholderText.classList.remove('hidden');
-            analyzeButton.disabled = true;
-            analyzeButton.textContent = "開始 AI 營養分析";
-            loadingIndicator.classList.add('hidden');
-            saveButton.disabled = true;
-            saveButton.classList.add('hidden');
-            analysisResult.innerHTML = `<p class="text-gray-500 italic">分析結果將顯示在這裡...</p>`;
-        }
-
-
-        // 監聽儲存按鈕 (步驟 3: 確認結果並儲存)
-        saveButton.addEventListener('click', async () => {
-            if (!currentMealData || !currentUserId) {
-                showMessage("儲存錯誤", "沒有可儲存的餐點數據或用戶未登入。", true);
-                return;
-            }
-
-            saveButton.disabled = true;
-            saveButton.textContent = "儲存中...";
-
-            try {
-                await saveMealData(currentMealData);
-                showMessage("儲存成功", "餐點記錄已成功加入歷史紀錄！", false);
-                
-                // 清理當前介面，準備迎接下一次上傳
-                resetAppStateForNewUpload();
-
-            } catch (error) {
-                console.error("資料儲存失敗:", error);
-                showMessage("資料庫錯誤", `儲存餐點數據時發生錯誤: ${error.message}`, true);
-            } finally {
-                saveButton.disabled = false;
-                saveButton.textContent = "✅ 確定結果並儲存紀錄";
-            }
-        });
-
-        // --- IV. Firestore 資料操作 ---
-
-        // 儲存餐點數據到 Firestore
-        async function saveMealData(mealData) {
-            if (!currentUserId || !db) throw new Error("資料庫或用戶未準備好。");
-            
-            // 私人資料路徑: /artifacts/{appId}/users/{userId}/meals
-            const collectionPath = `/artifacts/${appId}/users/${currentUserId}/meals`;
-            const mealsRef = collection(db, collectionPath);
-
-            // 儲存餐點數據和時間戳記
-            await addDoc(mealsRef, {
-                ...mealData,
-                timestamp: serverTimestamp() 
-            });
-            console.log("餐點數據儲存成功!");
-        }
-
-        // 載入並監聽歷史記錄 (步驟 4: 歷史紀錄)
-        function loadHistory(userId) {
-            if (!db) return;
-            
-            // 私人資料路徑: /artifacts/{appId}/users/{userId}/meals
-            const collectionPath = `/artifacts/${appId}/users/${userId}/meals`;
-            const mealsRef = collection(db, collectionPath);
-            
-            // 實時監聽數據變化
-            const q = query(mealsRef); 
-
-            onSnapshot(q, (snapshot) => {
-                let meals = [];
-                snapshot.forEach(doc => {
-                    meals.push({ id: doc.id, ...doc.data() });
-                });
-                
-                // 客戶端排序：根據時間戳記降序排列 (最新在前)
-                meals.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
-
-                renderHistory(meals);
-            }, (error) => {
-                console.error("歷史記錄監聽失敗:", error);
-                historyList.innerHTML = `<p class="text-red-500 text-center italic">載入失敗: ${error.message}</p>`;
-            });
-        }
-
-        // 渲染歷史記錄列表
+        // 渲染「歷史記錄」列表 (此版本僅顯示當前分析結果)
         function renderHistory(meals) {
             historyList.innerHTML = '';
             if (meals.length === 0) {
-                historyList.innerHTML = '<p class="text-gray-500 text-center italic">您還沒有追蹤任何餐點。</p>';
+                historyList.innerHTML = '<p class="text-gray-500 text-center italic">尚無分析紀錄</p>';
                 return;
             }
 
             meals.forEach(meal => {
-                const date = meal.timestamp 
-                    ? new Date(meal.timestamp.toDate()).toLocaleString('zh-TW', { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) 
-                    : '無時間記錄';
+                const date = new Date().toLocaleString('zh-TW', { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 
                 const card = document.createElement('div');
-                card.className = 'meal-card bg-white p-4 rounded-xl shadow-md border-l-4 border-indigo-400';
+                card.className = 'meal-card bg-white p-4 rounded-xl shadow-md border-l-4 border-teal-400';
                 card.innerHTML = `
-                    <p class="text-xs text-gray-400 mb-1">${date}</p>
+                    <p class="text-xs text-gray-400 mb-1">最近分析時間: ${date}</p>
                     <h4 class="text-lg font-bold text-gray-800 mb-2">${meal.dish_name || '未識別餐點'}</h4>
                     <div class="flex flex-wrap gap-2 text-xs font-medium">
                         <span class="px-2 py-1 bg-red-100 text-red-700 rounded-full">卡路里: ${Math.round(meal.calories || 0)} kcal</span>
@@ -521,9 +344,6 @@
                 historyList.appendChild(card);
             });
         }
-
-        // 啟動 Firebase 初始化
-        window.onload = initializeFirebase;
     </script>
 </body>
 </html>
