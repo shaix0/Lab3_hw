@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>營養追蹤儀表板</title>
+    <title>AI 營養追蹤儀表板</title>
     <!-- 載入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* 使用 Inter 字體 */
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6; /* 淺灰背景 */
+            background-color: #f0fdfa; /* 淺綠色背景 */
             min-height: 100vh;
             display: flex;
             align-items: flex-start;
@@ -22,87 +22,137 @@
             background-color: #ffffff;
             padding: 2rem;
             border-radius: 1.5rem;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
             width: 100%;
-            max-width: 900px;
+            max-width: 1024px;
             display: flex;
             flex-direction: column;
-            gap: 2rem;
+            gap: 3rem;
         }
-        /* 移除歷史紀錄的視覺樣式，因為此版本不儲存歷史 */
-        #historyList {
-            min-height: 5rem;
+        /* 針對 Food Entry 實作手寫體/個性化樣式 (可選) */
+        .food-name-display {
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: #115e59; /* 深綠色 */
+        }
+
+        /* 隱藏原生檔案輸入，僅顯示按鈕 */
+        .file-label {
+            display: block;
+            cursor: pointer;
+        }
+        .file-input {
+            width: 0.1px;
+            height: 0.1px;
+            opacity: 0;
+            overflow: hidden;
+            position: absolute;
+            z-index: -1;
         }
     </style>
+    <!-- 載入 Font Awesome (用於圖標) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
     <div id="app">
-        <h1 class="text-4xl font-extrabold text-teal-600 text-center">營養分析儀表板</h1>
-        
-        <!-- 狀態資訊 (精簡版 - 已移除 Firebase 相關狀態) -->
-        <div class="flex justify-between items-center text-sm text-gray-500 border-b pb-3">
-            <span id="connectionStatus" class="font-medium text-green-600">應用程式已啟動 (無資料庫)</span>
-        </div>
+        <!-- 主儀表板視圖容器 -->
+        <div id="mainDashboard" class="">
+            <h1 class="text-4xl font-extrabold text-teal-700 text-center">AI 營養追蹤儀表板</h1>
+            
+            <!-- 狀態資訊 -->
+            <div class="flex justify-between items-center text-sm text-gray-500 border-b pb-3">
+                <span id="connectionStatus" class="font-medium text-amber-600">應用程式已啟動 (使用 Local Storage 儲存)</span>
+            </div>
 
-        <div class="grid md:grid-cols-2 gap-6">
-            <!-- 左側：圖片上傳與分析 (步驟 1 & 2) -->
-            <div>
-                <h2 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">1. 上傳餐點照片並分析</h2>
+            <!-- 儀表板主要區域 -->
+            <div class="grid lg:grid-cols-3 gap-8">
+                
+                <!-- 左側：圖片上傳與分析結果 (2/3 寬) -->
+                <div class="lg:col-span-2 space-y-6">
+                    <h2 class="text-2xl font-bold text-gray-800 border-b pb-2">1. 餐點 AI 分析</h2>
 
-                <!-- 檔案輸入 -->
-                <label class="block mb-4">
-                    <span class="sr-only">選擇照片</span>
-                    <input type="file" id="fileInput" accept="image/*" class="block w-full text-sm text-gray-500
-                        file:mr-4 file:py-2 file:px-4
-                        file:rounded-full file:border-0
-                        file:text-sm file:font-semibold
-                        file:bg-teal-50 file:text-teal-700
-                        hover:file:bg-teal-100 cursor-pointer
-                    "/>
-                </label>
+                    <!-- 圖片輸入和分析按鈕 -->
+                    <div class="flex flex-col md:flex-row gap-4 items-center p-4 bg-gray-50 rounded-xl shadow-inner">
+                        <label for="fileInput" class="file-label w-full md:w-auto flex-grow">
+                            <div class="py-3 px-6 text-center text-sm font-semibold rounded-full border-2 border-teal-500 text-teal-700 bg-teal-50 hover:bg-teal-100 transition duration-200">
+                                <i class="fas fa-camera mr-2"></i> 選擇餐點照片
+                            </div>
+                            <input type="file" id="fileInput" accept="image/*" class="file-input"/>
+                        </label>
 
-                <!-- 圖片預覽 -->
-                <div class="relative bg-gray-100 rounded-lg overflow-hidden h-64 flex items-center justify-center mb-4">
-                    <img id="imagePreview" src="" alt="餐點預覽" class="hidden max-h-full max-w-full object-cover">
-                    <p id="placeholderText" class="text-gray-400">上傳餐點圖片以開始分析</p>
+                        <button 
+                            id="analyzeButton" 
+                            disabled
+                            class="w-full md:w-auto py-3 px-6 text-white font-bold rounded-full shadow-md transition duration-200 
+                            bg-teal-600 hover:bg-teal-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center min-w-[150px]"
+                        >
+                            <svg id="loadingIndicator" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            開始分析
+                        </button>
+                    </div>
+                    
+                    <!-- 圖片預覽 & 分析結果 -->
+                    <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <!-- 圖片預覽 -->
+                            <div class="relative bg-gray-100 rounded-lg overflow-hidden h-64 flex items-center justify-center">
+                                <img id="imagePreview" src="" alt="餐點預覽" class="hidden max-h-full max-w-full object-cover">
+                                <p id="placeholderText" class="text-gray-400">上傳圖片以開始分析</p>
+                            </div>
+                            
+                            <!-- 分析結果 -->
+                            <div>
+                                <h3 class="text-xl font-semibold text-teal-600 mb-3">AI 分析報告</h3>
+                                <div id="analysisResult" class="min-h-[14rem] space-y-4">
+                                    <!-- 移除紀錄按鈕，結果區域空間增大 -->
+                                    <p class="text-gray-500 italic">分析結果將顯示在這裡...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
 
-                <button 
-                    id="analyzeButton" 
-                    disabled
-                    class="w-full py-3 px-4 text-white font-bold rounded-xl shadow-lg transition duration-200 
-                    bg-teal-500 hover:bg-teal-600 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center"
-                >
-                    <svg id="loadingIndicator" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    開始 AI 營養分析
+                <!-- 右側：我的餐點日誌 (1/3 寬) -->
+                <div class="lg:col-span-1 flex flex-col h-full"> <!-- 調整結構以便底部按鈕固定 -->
+                    <h2 class="text-2xl font-bold text-gray-800 border-b pb-2 mb-4">2. 我的餐點日誌</h2>
+                    
+                    <!-- 食物日誌卡片 (Food Log Card) - 加上滾動條和彈性生長 -->
+                    <div id="foodLogCard" class="space-y-4 flex-grow overflow-y-auto max-h-[70vh]">
+                        <p class="text-gray-500 text-center italic" id="emptyLogMessage">日誌目前沒有餐點紀錄。</p>
+                    </div>
+
+                    <!-- 查看歷史紀錄按鈕 (位於右下角) -->
+                    <button 
+                        id="exportLogButton" 
+                        disabled
+                        class="mt-4 w-full py-3 px-6 text-white font-bold rounded-lg shadow-xl transition duration-200 
+                        bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center"
+                    >
+                        <i class="fas fa-list-alt mr-2"></i> 查看歷史紀錄
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 歷史紀錄視圖容器 (預設隱藏) -->
+        <div id="historyPage" class="hidden w-full space-y-8">
+            <div class="flex justify-between items-center border-b pb-4">
+                <h2 class="text-3xl font-bold text-teal-700">歷史餐點紀錄</h2>
+                <button id="backToDashboardButton" class="py-2 px-4 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition flex items-center">
+                    <i class="fas fa-arrow-left mr-2"></i> 返回儀表板
                 </button>
             </div>
-
-            <!-- 右側：分析結果 -->
-            <div>
-                <h2 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">2. 分析結果</h2>
-                
-                <div id="analysisResult" class="bg-teal-50 p-4 rounded-xl shadow-inner min-h-[16rem]">
-                    <p class="text-gray-500 italic">分析結果將顯示在這裡...</p>
-                </div>
-
-                <!-- 儲存按鈕已移除，因為無資料庫 -->
-                <div class="mt-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
-                    ⚠️ 提示：此為單機分析模式，結果不會被永久儲存。
-                </div>
+            
+            <div id="historyList" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- History items will be rendered here -->
             </div>
+            <p id="historyEmptyMessage" class="text-gray-500 text-center italic mt-10 hidden">歷史紀錄為空。</p>
         </div>
 
-        <!-- 歷史記錄 (現在只用於顯示當前分析結果) -->
-        <div class="mt-4">
-            <h2 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">3. 最近一次分析</h2>
-            <div id="historyList" class="space-y-4">
-                <p class="text-gray-500 text-center italic">尚無分析紀錄</p>
-            </div>
-        </div>
 
         <!-- 訊息彈出視窗 -->
         <div id="messageBox" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
@@ -115,7 +165,7 @@
     </div>
 
     <script type="module">
-        // 由於 Firebase 配置問題，此版本將專注於 AI 分析功能，移除所有 Firestore 相關代碼。
+        // 此版本使用 Local Storage 儲存日誌，並實現單頁應用 (SPA) 視圖切換功能。
 
         // --- DOM 元素 ---
         const fileInput = document.getElementById('fileInput');
@@ -124,17 +174,29 @@
         const analyzeButton = document.getElementById('analyzeButton');
         const loadingIndicator = document.getElementById('loadingIndicator');
         const analysisResult = document.getElementById('analysisResult');
+        // const logMealButton = document.getElementById('logMealButton'); // 紀錄按鈕已移除
+        const foodLogCard = document.getElementById('foodLogCard');
+        const emptyLogMessage = document.getElementById('emptyLogMessage');
+        
+        // 新增的 DOM 元素
+        const exportLogButton = document.getElementById('exportLogButton'); 
+        const mainDashboard = document.getElementById('mainDashboard');
+        const historyPage = document.getElementById('historyPage');
         const historyList = document.getElementById('historyList');
-        const messageBox = document.getElementById('messageBox');
-        const messageTitle = document.getElementById('messageTitle');
-        const messageContent = document.getElementById('messageContent');
+        const backToDashboardButton = document.getElementById('backToDashboardButton');
 
         // --- 全域變數 ---
-        const apiKey = "AIzaSyCQ51NrtTcRgYTuGNAgGVL1bkbaV-oTR5g"; // Gemini API Key (由 Canvas 環境提供)
+        // <<<< 請在這裡貼上您的 Gemini API 金鑰 >>>>
+        const apiKey = "AIzaSyCQ51NrtTcRgYTuGNAgGVL1bkbaV-oTR5g"; 
         let base64Image = null; // 儲存當前 Base64 圖片數據
+        // lastAnalysisData 變數已不再需要，因為紀錄將在分析完成後立即自動儲存。
 
         // --- 輔助函數：替代 alert() ---
         function showMessage(title, message, isError = true) {
+            const messageBox = document.getElementById('messageBox');
+            const messageTitle = document.getElementById('messageTitle');
+            const messageContent = document.getElementById('messageContent');
+
             messageTitle.textContent = title;
             messageContent.textContent = message;
             
@@ -147,6 +209,22 @@
             messageBox.classList.remove('hidden');
             messageBox.classList.add('flex');
         }
+        
+        // --- SPA 視圖切換函數 ---
+        function switchView(viewId) {
+            if (viewId === 'dashboard') {
+                mainDashboard.classList.remove('hidden');
+                historyPage.classList.add('hidden');
+                // 確保返回時主日誌是更新的
+                renderFoodLog(); 
+            } else if (viewId === 'history') {
+                mainDashboard.classList.add('hidden');
+                historyPage.classList.remove('hidden');
+                // 渲染歷史頁面內容
+                renderHistoryPage(); 
+            }
+        }
+
 
         // --- I. 圖像處理與 AI 分析 ---
 
@@ -168,11 +246,13 @@
         fileInput.addEventListener('change', async (event) => {
             const file = event.target.files[0];
             
-            // 清除之前的結果
+            // 清除之前的狀態
             analysisResult.innerHTML = `<p class="text-gray-500 italic">分析結果將顯示在這裡...</p>`;
-            historyList.innerHTML = `<p class="text-gray-500 text-center italic">尚無分析紀錄</p>`;
+            // logMealButton.classList.add('hidden'); // 移除對已移除按鈕的參考
+            // lastAnalysisData = null; // 移除對此變數的清除，因為不再需要儲存待確認的資料
 
             if (file) {
+                // 圖片預覽
                 imagePreview.src = URL.createObjectURL(file);
                 imagePreview.classList.remove('hidden');
                 placeholderText.classList.add('hidden');
@@ -198,14 +278,13 @@
         analyzeButton.addEventListener('click', async () => {
             if (!base64Image) return;
 
-            // 新增 API Key 檢查：如果金鑰仍為空字串，發出警告
+            // API Key 檢查
             if (apiKey === "") {
                 showMessage(
                     "API 金鑰遺失", 
-                    "AI 分析功能需要有效的 API 金鑰。請確認您的環境已正確提供金鑰。", 
+                    "AI 分析功能需要有效的 API 金鑰。請將金鑰貼到程式碼中的 apiKey 變數。", 
                     true
                 );
-                // 恢復按鈕狀態
                 analyzeButton.disabled = base64Image === null; 
                 loadingIndicator.classList.add('hidden');
                 return;
@@ -214,10 +293,10 @@
             analysisResult.innerHTML = `<div class="text-center py-8"><svg class="animate-spin h-8 w-8 text-teal-500 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><p class="mt-2 text-teal-500">AI 正在分析餐點中...</p></div>`;
             analyzeButton.disabled = true;
             loadingIndicator.classList.remove('hidden');
-
+            
             try {
                 // 提示詞要求 AI 輸出指定格式的 JSON，並要求分析摘要為繁體中文
-                const prompt = "Please analyze this meal image. Identify the main dish(es) and estimate the nutritional content (Calories, Protein, Fat, Carbs) in grams. Provide the result ONLY as a JSON object that adheres to the following structure. The analysis_summary should be a concise description of the nutritional value in Traditional Chinese.\n\nStructure:\n{\n  \"dish_name\": \"string\",\n  \"calories\": \"number\",\n  \"protein_g\": \"number\",\n  \"fat_g\": \"number\",\n  \"carbs_g\": \"number\",\n  \"analysis_summary\": \"string\"\n}";
+                const prompt = "Please analyze this meal image. Identify the main dish(es) and estimate the nutritional content (Calories, Protein, Fat, Carbs) in grams. Provide the result ONLY as a JSON object that adheres to the following structure. The analysis_summary should be a concise description of the nutritional value in Traditional Chinese.\n\nStructure:\n{\n  \"dish_name\": \"string\",\n  \"calories\": \"number\",\n  \"protein_g\": \"number\",\n  \"fat_g\": \"number\",\n  \"carbs_g\": \"number\",\n  \"analysis_summary\": \"string\",\n  \"image_data\": \"base64 string of the image\" \n}";
 
                 const payload = {
                     contents: [
@@ -228,7 +307,7 @@
                                 {
                                     inlineData: {
                                         mimeType: "image/jpeg", // 假設 MIME 類型為 jpeg
-                                        data: base64Image
+                                        data: base64Image // 傳遞給 AI 圖片數據
                                     }
                                 }
                             ]
@@ -244,7 +323,8 @@
                             "protein_g": { "type": "NUMBER" },
                             "fat_g": { "type": "NUMBER" },
                             "carbs_g": { "type": "NUMBER" },
-                            "analysis_summary": { "type": "STRING" }
+                            "analysis_summary": { "type": "STRING" },
+                            "image_data": { "type": "STRING" } // 要求 AI 回傳 base64
                             },
                             required: ["dish_name", "calories", "protein_g", "fat_g", "carbs_g", "analysis_summary"]
                         }
@@ -268,7 +348,6 @@
                         });
 
                         if (!response.ok) {
-                            // 針對 API 權限和頻率的錯誤進行明確處理
                             if (response.status === 403) {
                                 throw new Error('403 Forbidden: API 金鑰無效或存取權限不足。');
                             } else if (response.status === 429) {
@@ -281,7 +360,6 @@
                         jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
 
                         if (jsonText) {
-                            // 成功取得 JSON，退出重試循環
                             break; 
                         } else {
                             throw new Error("AI response was empty or malformed.");
@@ -298,17 +376,21 @@
                     }
                 }
                 
+                // 1. 解析 AI 數據
                 const mealData = JSON.parse(jsonText.trim()); 
+                mealData.image_data = base64Image;
+                mealData.timestamp = Date.now(); // 儲存時間戳記
                 
-                // 顯示結果到兩個區域
+                // 2. 自動儲存餐點到日誌
+                saveLogEntry(mealData); 
+                
+                // 3. 顯示結果
                 renderAnalysisResult(mealData);
-                renderHistory([mealData]); // 僅顯示當前結果為「歷史」
 
             } catch (error) {
                 console.error("AI 分析失敗:", error);
                 analysisResult.innerHTML = `<p class="text-red-500 font-medium">分析失敗，請檢查圖片或重試: ${error.message}</p>`;
                 
-                // 顯示更詳細的錯誤訊息給使用者
                 const errorMessage = error.message.includes('403 Forbidden') 
                     ? `無法完成 AI 分析。請確認您的 API 金鑰有效且具有足夠的權限。錯誤: ${error.message}`
                     : `無法完成 AI 分析。請確保圖片清晰並重試。錯誤: ${error.message}`;
@@ -320,6 +402,144 @@
                 loadingIndicator.classList.add('hidden');
             }
         });
+
+
+        // --- II. Local Storage 儲存與日誌渲染 ---
+
+        const STORAGE_KEY = 'nutrition_log_entries';
+
+        // 載入日誌紀錄
+        function loadLogEntries() {
+            try {
+                const entries = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+                // 確保最新的在前面
+                return entries.sort((a, b) => b.timestamp - a.timestamp);
+            } catch (e) {
+                console.error("無法從 Local Storage 載入日誌:", e);
+                return [];
+            }
+        }
+
+        // 儲存新的日誌條目
+        function saveLogEntry(mealData) {
+            const entries = loadLogEntries();
+            entries.unshift(mealData); // 新的放在最前面
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+            renderFoodLog();
+            showMessage("紀錄成功", `餐點「${mealData.dish_name}」已成功紀錄到日誌。`, false);
+        }
+
+        // 渲染單個食物條目 (Food Entry)
+        function renderFoodEntry(meal) {
+            const date = new Date(meal.timestamp).toLocaleString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
+            
+            const entry = document.createElement('div');
+            entry.className = 'food-entry bg-white p-4 rounded-xl shadow-lg border border-teal-200';
+            entry.innerHTML = `
+                <div class="flex justify-between items-center mb-2">
+                    <p class="food-name-display text-lg font-extrabold text-gray-800">${meal.dish_name || '未命名餐點'} <span class="text-sm font-normal text-gray-400">(${date})</span></p>
+                    <button data-timestamp="${meal.timestamp}" class="delete-btn text-red-500 hover:text-red-700 transition"><i class="fas fa-trash-alt"></i></button>
+                </div>
+                
+                <div class="food-details flex gap-4">
+                    <img src="data:image/jpeg;base64,${meal.image_data}" alt="${meal.dish_name}" class="food-image w-20 h-20 object-cover rounded-lg shadow-md">
+                    <div class="info flex-grow text-sm">
+                        <p class="font-bold text-red-600 mb-1">${Math.round(meal.calories || 0)} kcal</p>
+                        <div class="flex flex-wrap gap-x-3 gap-y-1 text-xs">
+                            <span class="text-blue-600">P: ${(meal.protein_g || 0).toFixed(1)}g</span>
+                            <span class="text-yellow-600">F: ${(meal.fat_g || 0).toFixed(1)}g</span>
+                            <span class="text-green-600">C: ${(meal.carbs_g || 0).toFixed(1)}g</span>
+                        </div>
+                        <p class="notes text-gray-500 italic mt-2 text-xs">${meal.analysis_summary || '無總結。'}</p>
+                    </div>
+                </div>
+            `;
+
+            // 處理刪除按鈕
+            entry.querySelector('.delete-btn').addEventListener('click', (e) => {
+                const timestamp = e.currentTarget.getAttribute('data-timestamp');
+                deleteLogEntry(parseInt(timestamp));
+            });
+
+            return entry;
+        }
+
+        // 渲染整個食物日誌
+        function renderFoodLog() {
+            const entries = loadLogEntries();
+            foodLogCard.innerHTML = '';
+            
+            if (entries.length === 0) {
+                emptyLogMessage.classList.remove('hidden');
+                foodLogCard.appendChild(emptyLogMessage);
+                exportLogButton.disabled = true; // 日誌為空時禁用查看按鈕
+            } else {
+                emptyLogMessage.classList.add('hidden');
+                entries.forEach(meal => {
+                    foodLogCard.appendChild(renderFoodEntry(meal));
+                });
+                exportLogButton.disabled = false; // 日誌有內容時啟用查看按鈕
+            }
+        }
+        
+        // 渲染歷史紀錄頁面
+        function renderHistoryPage() {
+            const entries = loadLogEntries();
+            historyList.innerHTML = '';
+            const historyEmptyMessage = document.getElementById('historyEmptyMessage');
+
+            if (entries.length === 0) {
+                historyEmptyMessage.classList.remove('hidden');
+                return;
+            }
+            historyEmptyMessage.classList.add('hidden');
+
+            entries.forEach(meal => {
+                const date = new Date(meal.timestamp).toLocaleString('zh-TW', { dateStyle: 'short', timeStyle: 'short' });
+                
+                const entry = document.createElement('div');
+                entry.className = 'bg-white p-4 rounded-xl shadow-md border border-blue-200 hover:shadow-lg transition duration-150 transform hover:-translate-y-0.5';
+                entry.innerHTML = `
+                    <div class="flex items-start justify-between mb-2">
+                        <p class="text-lg font-bold text-teal-600">${meal.dish_name || '未識別餐點'}</p>
+                        <button data-timestamp="${meal.timestamp}" class="delete-btn-history text-red-400 hover:text-red-600 transition text-sm">刪除</button>
+                    </div>
+                    <p class="text-xs text-gray-500 mb-3">${date}</p>
+                    <div class="info grid grid-cols-2 gap-y-1 text-sm font-medium">
+                        <p class="font-bold text-red-600 col-span-2">${Math.round(meal.calories || 0)} kcal</p>
+                        <span class="text-blue-600">蛋白質: ${(meal.protein_g || 0).toFixed(1)}g</span>
+                        <span class="text-yellow-600">脂肪: ${(meal.fat_g || 0).toFixed(1)}g</span>
+                        <span class="text-green-600 col-span-2">碳水化合物: ${(meal.carbs_g || 0).toFixed(1)}g</span>
+                    </div>
+                    <p class="notes text-gray-500 italic mt-3 text-xs line-clamp-2">${meal.analysis_summary || '無總結資訊。'}</p>
+                `;
+                
+                // 處理歷史頁面的刪除按鈕
+                entry.querySelector('.delete-btn-history').addEventListener('click', (e) => {
+                    const timestamp = e.currentTarget.getAttribute('data-timestamp');
+                    deleteLogEntry(parseInt(timestamp));
+                    // 刪除後自動刷新歷史頁面
+                    renderHistoryPage(); 
+                });
+
+                historyList.appendChild(entry);
+            });
+        }
+
+
+        // 刪除日誌條目
+        function deleteLogEntry(timestampToDelete) {
+            let entries = loadLogEntries();
+            entries = entries.filter(meal => meal.timestamp !== timestampToDelete);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+            // 根據當前視圖刷新相應的列表
+            if (!historyPage.classList.contains('hidden')) {
+                 renderHistoryPage();
+            } else {
+                renderFoodLog();
+            }
+            
+        }
 
         // 渲染分析結果到 UI (分析結果區塊)
         function renderAnalysisResult(data) {
@@ -334,38 +554,29 @@
                     </div>
                     <div class="pt-2">
                         <p class="font-semibold text-gray-700 mb-1">AI 營養總結：</p>
-                        <p class="text-gray-600 italic">${data.analysis_summary || '無總結資訊。'}</p>
+                        <p class="text-gray-600 italic text-sm">${data.analysis_summary || '無總結資訊。'}</p>
+                    </div>
+                    <div class="text-sm text-center text-teal-500 pt-2">
+                         <i class="fas fa-check-circle mr-1"></i> 餐點已自動紀錄。
                     </div>
                 </div>
             `;
         }
+        
+        // --- III. 初始化與事件綁定 ---
+        
+        // 綁定：查看歷史紀錄按鈕事件
+        exportLogButton.addEventListener('click', () => switchView('history'));
 
-        // 渲染「歷史記錄」列表 (此版本僅顯示當前分析結果)
-        function renderHistory(meals) {
-            historyList.innerHTML = '';
-            if (meals.length === 0) {
-                historyList.innerHTML = '<p class="text-gray-500 text-center italic">尚無分析紀錄</p>';
-                return;
-            }
+        // 綁定：返回儀表板按鈕事件
+        backToDashboardButton.addEventListener('click', () => switchView('dashboard'));
 
-            meals.forEach(meal => {
-                const date = new Date().toLocaleString('zh-TW', { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 
-                const card = document.createElement('div');
-                card.className = 'meal-card bg-white p-4 rounded-xl shadow-md border-l-4 border-teal-400';
-                card.innerHTML = `
-                    <p class="text-xs text-gray-400 mb-1">最近分析時間: ${date}</p>
-                    <h4 class="text-lg font-bold text-gray-800 mb-2">${meal.dish_name || '未識別餐點'}</h4>
-                    <div class="flex flex-wrap gap-2 text-xs font-medium">
-                        <span class="px-2 py-1 bg-red-100 text-red-700 rounded-full">卡路里: ${Math.round(meal.calories || 0)} kcal</span>
-                        <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded-full">蛋白質: ${(meal.protein_g || 0).toFixed(1)} g</span>
-                        <span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full">脂肪: ${(meal.fat_g || 0).toFixed(1)} g</span>
-                        <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full">碳水: ${(meal.carbs_g || 0).toFixed(1)} g</span>
-                    </div>
-                `;
-                historyList.appendChild(card);
-            });
-        }
+        // 應用程式載入時執行
+        window.onload = () => {
+             // 確保起始是儀表板視圖
+            switchView('dashboard');
+        };
     </script>
 </body>
 </html>
