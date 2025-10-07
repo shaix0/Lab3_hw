@@ -125,9 +125,9 @@
                         <p class="text-gray-500 text-center italic" id="emptyLogMessage">日誌目前沒有餐點紀錄。</p>
                     </div>
 
-                    <!-- 查看歷史紀錄按鈕 (位於右下角) -->
+                    <!-- 查看歷史紀錄按鈕 (位於右下角) exportLogButton -->
                     <button 
-                        id="exportLogButton" 
+                        id="tem" 
                         disabled
                         class="mt-4 w-full py-3 px-6 text-white font-bold rounded-lg shadow-xl transition duration-200 
                         bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center"
@@ -566,7 +566,8 @@
         // --- III. 初始化與事件綁定 ---
         
         // 綁定：查看歷史紀錄按鈕事件
-        exportLogButton.addEventListener('click', () => switchView('history'));
+        // exportLogButton.addEventListener('click', () => switchView('history'));
+        exportLogButton.addEventListener('click', () => switchView('ai_test'));
 
         // 綁定：返回儀表板按鈕事件
         backToDashboardButton.addEventListener('click', () => switchView('dashboard'));
